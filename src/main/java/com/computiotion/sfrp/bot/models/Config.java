@@ -25,6 +25,7 @@ public class Config {
 
         if (configStr == null) {
             config = new Config();
+            getJedis().set(CONFIG_NAME, getGson().toJson(config));
         } else {
             config = getGson().fromJson(configStr, Config.class);
         }
