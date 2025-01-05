@@ -22,7 +22,7 @@ public class BotApplication {
 
     private static final Log log = LogFactory.getLog(BotApplication.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
         SpringApplication.run(BotApplication.class, args);
 
         ClassTools.getSubclassesOf("com.computiotion.sfrp.bot.commands", Command.class).forEach(command -> {
