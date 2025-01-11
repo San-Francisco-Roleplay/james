@@ -1,19 +1,16 @@
 package com.computiotion.sfrp.bot.listeners;
 
-import com.computiotion.sfrp.bot.Emoji;
 import com.computiotion.sfrp.bot.commands.Command;
-import com.computiotion.sfrp.bot.models.Config;
 import com.computiotion.sfrp.bot.templates.InternalError;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
+import org.xml.sax.SAXException;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 
 public class SlashCommandListener extends ListenerAdapter {
     private static final Log log = LogFactory.getLog(SlashCommandListener.class);
@@ -25,7 +22,7 @@ public class SlashCommandListener extends ListenerAdapter {
         log.trace("Executing from slash");
         try {
             Command.executeFromSlash(event);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | ParserConfigurationException | IOException | SAXException e) {
             event.replyEmbeds(new InternalError().makeEmbed().build())
                     .setEphemeral(true)
                     .queue();

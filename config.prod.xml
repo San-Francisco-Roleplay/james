@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Commands>
+        <Levels>
+            <Enabled base="allow" />
+            <Staff base="deny">
+                <roles>
+                    <allow>1322229678181978292</allow> <!-- SFRP - Staff -->
+                </roles>
+                <silent>true</silent>
+            </Staff>
+            <InternalAffairs base="deny">
+                <roles>
+                    <allow>1322086591140724817</allow> <!-- SFRP - IA -->
+                </roles>
+                <silent>true</silent>
+            </InternalAffairs>
+            <Developer base="deny">
+                <roles>
+                    <allow>1323826184689291314</allow> <!-- SFRP - Development Team -->
+                </roles>
+                <silent>true</silent>
+            </Developer>
+            <SeniorManagement base="deny">
+                <roles>
+                    <allow>1323829322133409883</allow> <!-- SFRP - Senior Management -->
+                </roles>
+                <silent>true</silent>
+            </SeniorManagement>
+            <Disabled base="deny" />
+        </Levels>
+        <MessagePrefixes>
+            <prefix>-</prefix> <!-- Avoid using prefixes in use by other bots. -->
+            <mention />
+        </MessagePrefixes>
+    </Commands>
+    <ERLC>
+        <messages>
+            <hint>👋 Enjoying your roleplay? Join our communications server at nfUPYTwyF3</hint>
+            <hint>🚨 Remember to always pull over for our moderator's green or amber lights.</hint>
+            <hint>🚒 Interested in joining (or even starting) a department? Join our communications server at nfUPYTwyF3</hint>
+            <interval>2m</interval>
+        </messages>
+        <commands>
+            <sender>1324505594333233152</sender>
+            <channels>
+                <power-commands>1324440705984364574</power-commands>
+                <offduty-commands>1324440780043190282</offduty-commands>
+            </channels>
+            <always-allowed-commands> <!-- You will not be pinged for using these commands, but a message will still be sent. -->
+                <command>refresh</command>
+                <command>pm</command>
+            </always-allowed-commands>
+            <off-duty-exempt> <!-- Must only be roles – channels, guilds, and users are not permitted. -->
+                <role>1323831648223101028</role>  <!-- SFRP - Moderation Bypass -->
+            </off-duty-exempt>
+        </commands>
+    </ERLC>
+</Configuration>

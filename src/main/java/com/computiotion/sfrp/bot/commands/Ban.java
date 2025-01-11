@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public class Ban extends Command {
     private static final Log log = LogFactory.getLog(Ban.class);
 
-    @CommandExecutor()
+    @CommandExecutor(level = PermissionLevel.Staff)
     public void ban(@NotNull CommandInteraction interaction, @User("member") net.dv8tion.jda.api.entities.User user, @Text(value = "reason", required = false) String reason) {
         net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction slash = null;
         Message message = null;

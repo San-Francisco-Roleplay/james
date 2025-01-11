@@ -2,17 +2,20 @@ package com.computiotion.sfrp.bot.listeners;
 
 import com.computiotion.sfrp.bot.Emoji;
 import com.computiotion.sfrp.bot.commands.Command;
-import com.computiotion.sfrp.bot.models.Config;
+import com.computiotion.sfrp.bot.config.CommandConfig;
+import com.computiotion.sfrp.bot.config.Config;
+import com.computiotion.sfrp.bot.config.ConfigReader;
 import com.computiotion.sfrp.bot.templates.InternalError;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
+import org.xml.sax.SAXException;
 
-import java.lang.reflect.InvocationTargetException;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,14 +25,21 @@ public class MessageListener extends ListenerAdapter {
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         Message message = event.getMessage();
-        if (event.getAuthor().isBot()) return;
+        if (event.getAuthor().isBot() || event.getAuthor().isSystem()) return;
 
         String mention = event.getJDA().getSelfUser().getAsMention();
         String trimmed = message.getContentRaw().trim();
-        Config config = Config.getInstance();
+        Config config = null;
+        try {
+            config = ConfigReader.fromApplicationDefaults();
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new RuntimeException(e);
+        }
 
-        Set<String> prefixes = new HashSet<>(config.getPrefixes());
-        prefixes.add(mention);
+        CommandConfig commands = config.getCommands();
+
+        Set<String> prefixes = new HashSet<>(commands.getPrefixes());
+        if (commands.includesMention()) prefixes.add(mention);
 
         String prefix = prefixes.stream().filter(trimmed::startsWith).findFirst().orElse(null);
         if (prefix == null) return;
@@ -42,6 +52,8 @@ public class MessageListener extends ListenerAdapter {
             Command.executeFromMessage(message, content);
         } catch (RuntimeException e) {
             message.replyEmbeds(new InternalError().makeEmbed().build()).queue();
+            throw new RuntimeException(e);
+        } catch (ParserConfigurationException | IOException | SAXException e) {
             throw new RuntimeException(e);
         }
         message.removeReaction(Emoji.Loading.toJda()).complete();

@@ -102,6 +102,12 @@
             <artifactId>protobuf-java</artifactId>
             <version>4.28.2</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.konghq/unirest-java -->
+        <dependency>
+            <groupId>com.konghq</groupId>
+            <artifactId>unirest-java</artifactId>
+            <version>3.14.5</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
@@ -112,6 +118,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.17.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.18.0</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains</groupId>
@@ -156,11 +168,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>33.4.0-jre</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-xml</artifactId>
-            <version>2.18.2</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

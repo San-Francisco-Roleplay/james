@@ -17,4 +17,6 @@ public @interface CommandExecutor {
      * @return the description of the command
      */
     String description() default "No description was provided.";
+
+    PermissionLevel level() default PermissionLevel.Enabled;
 }

@@ -51,6 +51,19 @@ public class ConfigManager implements WebMvcConfigurer {
      * @throws NullPointerException If the token {@code DISCORD_TOKEN} is not defined in the env file.
      */
     @NotNull
+    public static String getERLCApiKey() {
+        String value = System.getenv("ERLC_API_KEY");
+        if (value == null) throw new NullPointerException("No ERLC_API_KEY was found in the .env file.");
+        return value;
+    }
+
+    /**
+     * Retrieves the Discord bot token from {@code .env}.
+     *
+     * @return The token, as defined in the .env file.
+     * @throws NullPointerException If the token {@code DISCORD_TOKEN} is not defined in the env file.
+     */
+    @NotNull
     public static String getBotToken() {
         String value = System.getenv("DISCORD_TOKEN");
         if (value == null) throw new NullPointerException("No DISCORD_TOKEN was found in the .env file.");
@@ -106,5 +119,41 @@ public class ConfigManager implements WebMvcConfigurer {
         String value = System.getenv("REDIS_PORT");
         if (value == null) throw new NullPointerException("No REDIS_PORT was found in the .env file.");
         return Integer.parseInt(value);
+    }
+
+    /**
+     * Retrieves the Bloxlink API key from {@code .env}.
+     *
+     * @return The key, as defined in the .env file.
+     * @throws NullPointerException If the token {@code BLOXLINK_API_KEY} is not defined in the env file.
+     */
+    public static @NotNull String getBloxlinkApiKey() {
+        String value = System.getenv("BLOXLINK_API_KEY");
+        if (value == null) throw new NullPointerException("No BLOXLINK_API_KEY was found in the .env file.");
+        return value;
+    }
+
+    /**
+     * Retrieves the ERM API key from {@code .env}.
+     *
+     * @return The key, as defined in the .env file.
+     * @throws NullPointerException If the token {@code ERM_API_KEY} is not defined in the env file.
+     */
+    public static @NotNull String getErmAPIKey() {
+        String value = System.getenv("ERM_API_KEY");
+        if (value == null) throw new NullPointerException("No ERM_API_KEY was found in the .env file.");
+        return value;
+    }
+
+    /**
+     * Retrieves the ERM Guild ID from {@code .env}.
+     *
+     * @return The ID, as defined in the .env file.
+     * @throws NullPointerException If the token {@code ERM_GUILD_ID} is not defined in the env file.
+     */
+    public static @NotNull String getErmGuild() {
+        String value = System.getenv("ERM_GUILD_ID");
+        if (value == null) throw new NullPointerException("No ERM_GUILD_ID was found in the .env file.");
+        return value;
     }
 }

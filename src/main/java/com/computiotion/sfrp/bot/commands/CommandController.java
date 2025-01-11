@@ -14,10 +14,6 @@ public @interface CommandController {
     String value();
 
     /**
-     * @return whether the command is internal and may only be used in development servers
-     */
-    boolean internal() default false;
-    /**
      * @return the description of the command
      */
     String description() default "No description was provided.";

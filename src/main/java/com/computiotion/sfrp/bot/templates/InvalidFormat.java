@@ -13,7 +13,7 @@ public class InvalidFormat implements EmbedTemplate {
     public EmbedBuilder makeEmbed() {
         return new EmbedBuilder()
                 .setTitle("Incorrect Usage")
-                .setDescription(String.format("The proper usage is: \n```\n%s\n```", usage))
+                .setDescription(String.format("The proper usage is: \n```\n%s\n```\nAs a reminder, for multi-word text/string inputs, you must wrap the parameter in quotes (i.e. `\"Lorem Ipsum dolor sit amet.\"`", usage))
                 .setColor(Colors.Red.getColor());
     }
 }

@@ -2,12 +2,12 @@ package com.computiotion.sfrp.bot.commands;
 
 import com.computiotion.sfrp.bot.Colors;
 import com.computiotion.sfrp.bot.Emoji;
+import com.computiotion.sfrp.bot.config.*;
 import com.computiotion.sfrp.bot.templates.InternalError;
 import com.computiotion.sfrp.bot.templates.*;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.IMentionable;
-import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
@@ -19,7 +19,10 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -219,7 +222,94 @@ public abstract class Command {
         return res.toString();
     }
 
-    public static void executeFromMessage(@NotNull Message message, @NotNull String content) {
+    public static PermissionLevelDefault canExecute(@NotNull Message message, @NotNull CommandExecutor executor) throws ParserConfigurationException, IOException, SAXException {
+        PermissionLevel level = executor.level();
+        Config config = ConfigReader.fromApplicationDefaults();
+
+        CommandConfig commands = config.getCommands();
+        Map<PermissionLevel, PermissionLevelData> permissions = commands.getPermissions();
+
+        PermissionLevelData levelData = permissions.get(level);
+        PermissionLevelDefault base = levelData.getBase();
+
+        PermissionLevelParam guilds = levelData.getGuilds();
+        PermissionLevelParam channels = levelData.getChannels();
+        PermissionLevelParam roles = levelData.getRoles();
+        PermissionLevelParam users = levelData.getUser();
+
+        net.dv8tion.jda.api.entities.User author = message.getAuthor();
+        Guild guild = message.getGuild();
+        Member member = guild.getMemberById(author.getId());
+        List<net.dv8tion.jda.api.entities.Role> userRoles = new ArrayList<>();
+
+        if (member != null) {
+            userRoles = member.getRoles();
+        }
+//        roles.deny().stream().filter(role -> )
+
+        if (base == PermissionLevelDefault.ALLOW) {
+            if (guilds.deny().contains(guild.getId())) return PermissionLevelDefault.DENY;
+            if (channels.deny().contains(message.getChannelId())) return PermissionLevelDefault.DENY;
+            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.deny().contains(role))) return PermissionLevelDefault.DENY;
+            if (users.deny().contains(author.getId())) return PermissionLevelDefault.DENY;
+            log.debug("No overriding clauses found for " + base.name() + " – is this an error?");
+        } else if (base == PermissionLevelDefault.DENY) {
+            if (guilds.allow().contains(guild.getId())) return PermissionLevelDefault.ALLOW;
+            if (channels.allow().contains(message.getChannelId())) return PermissionLevelDefault.ALLOW;
+            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.allow().contains(role))) return PermissionLevelDefault.ALLOW;
+        if (users.allow().contains(author.getId())) return PermissionLevelDefault.ALLOW;
+            log.debug("No overriding clauses found for " + base.name() + " – is this an error?");
+        }
+
+        return base;
+    }
+
+    public static PermissionLevelDefault canExecute(@NotNull SlashCommandInteractionEvent interaction, @NotNull CommandExecutor executor) throws ParserConfigurationException, IOException, SAXException {
+        PermissionLevel level = executor.level();
+        Config config = ConfigReader.fromApplicationDefaults();
+
+        CommandConfig commands = config.getCommands();
+        Map<PermissionLevel, PermissionLevelData> permissions = commands.getPermissions();
+
+        PermissionLevelData levelData = permissions.get(level);
+        PermissionLevelDefault base = levelData.getBase();
+
+        PermissionLevelParam guilds = levelData.getGuilds();
+        PermissionLevelParam channels = levelData.getChannels();
+        PermissionLevelParam roles = levelData.getRoles();
+        PermissionLevelParam users = levelData.getUser();
+
+        net.dv8tion.jda.api.entities.User author = interaction.getUser();
+        Guild guild = interaction.getGuild();
+
+        if (guild == null) return PermissionLevelDefault.DENY;
+
+        Member member = guild.getMemberById(author.getId());
+        List<net.dv8tion.jda.api.entities.Role> userRoles = new ArrayList<>();
+
+        if (member != null) {
+            userRoles = member.getRoles();
+        }
+//        roles.deny().stream().filter(role -> )
+
+        if (base == PermissionLevelDefault.ALLOW) {
+            if (guilds.deny().contains(guild.getId())) return PermissionLevelDefault.DENY;
+            if (channels.deny().contains(interaction.getChannelId())) return PermissionLevelDefault.DENY;
+            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.deny().contains(role))) return PermissionLevelDefault.DENY;
+            if (users.deny().contains(author.getId())) return PermissionLevelDefault.DENY;
+            log.debug("No overriding clauses found for " + base.name() + " – is this an error?");
+        } else if (base == PermissionLevelDefault.DENY) {
+            if (guilds.allow().contains(guild.getId())) return PermissionLevelDefault.ALLOW;
+            if (channels.allow().contains(interaction.getChannelId())) return PermissionLevelDefault.ALLOW;
+            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.allow().contains(role))) return PermissionLevelDefault.ALLOW;
+            if (users.allow().contains(author.getId())) return PermissionLevelDefault.ALLOW;
+            log.debug("No overriding clauses found for " + base.name() + " – is this an error?");
+        }
+
+        return base;
+    }
+
+    public static void executeFromMessage(@NotNull Message message, @NotNull String content) throws ParserConfigurationException, IOException, SAXException {
         log.trace("Adding Emoji");
         message.addReaction(Emoji.Loading.toJda()).complete();
         log.trace("Finished adding Emoji");
@@ -301,7 +391,26 @@ public abstract class Command {
             message.replyEmbeds(new NoSubcommand(commandStr + " " + subCommand).makeEmbed().build()).complete();
             return;
         }
+
         log.trace("Method found: " + method.getName());
+        CommandExecutor executor = method.getAnnotation(CommandExecutor.class);
+
+        if (canExecute(message, executor) == PermissionLevelDefault.DENY) {
+            Config config = ConfigReader.fromApplicationDefaults();
+
+            CommandConfig commands = config.getCommands();
+            Map<PermissionLevel, PermissionLevelData> permissions = commands.getPermissions();
+
+            PermissionLevelData levelData = permissions.get(executor.level());
+            message.removeReaction(Emoji.Loading.toJda()).complete();
+
+            if (levelData.isSilent()) {
+                return;
+            }
+
+            message.replyEmbeds(new NoPerms().makeEmbed().build()).complete();
+            return;
+        }
 
         log.trace("Parsing method for parameters.");
         List<ParsedParameter> params = parseMethod(method);
@@ -492,7 +601,7 @@ public abstract class Command {
         }
     }
 
-    public static void executeFromSlash(@NotNull SlashCommandInteractionEvent interaction) {
+    public static void executeFromSlash(@NotNull SlashCommandInteractionEvent interaction) throws ParserConfigurationException, IOException, SAXException {
         String[] split = interaction.getFullCommandName().split(" ");
         String commandStr = split[0];
 
@@ -566,6 +675,26 @@ public abstract class Command {
             return;
         }
         log.trace("Method found: " + method.getName());
+
+        CommandExecutor executor = method.getAnnotation(CommandExecutor.class);
+
+        if (canExecute(interaction, executor) == PermissionLevelDefault.DENY) {
+            Config config = ConfigReader.fromApplicationDefaults();
+
+            CommandConfig commands = config.getCommands();
+            Map<PermissionLevel, PermissionLevelData> permissions = commands.getPermissions();
+
+            PermissionLevelData levelData = permissions.get(executor.level());
+
+            if (levelData.isSilent()) {
+                return;
+            }
+
+            interaction.replyEmbeds(new NoPerms().makeEmbed().build())
+                    .setEphemeral(true)
+                    .complete();
+            return;
+        }
 
         log.trace("Parsing method for parameters.");
         List<ParsedParameter> params = parseMethod(method);
