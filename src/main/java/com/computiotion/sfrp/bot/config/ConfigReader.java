@@ -1,5 +1,6 @@
 package com.computiotion.sfrp.bot.config;
 
+import com.computiotion.sfrp.bot.BotApplication;
 import com.computiotion.sfrp.bot.commands.PermissionLevel;
 import com.computiotion.sfrp.bot.config.erlc.CommandLogType;
 import com.computiotion.sfrp.bot.config.erlc.ERLCConfig;
@@ -49,14 +50,17 @@ public final class ConfigReader {
         if (appDefaults != null) return appDefaults;
 
         String fileLoc = System.getenv(CONFIG_FILE_ENV_ENTRY);
-        if (fileLoc == null) {
-            String json = System.getenv(CONFIG_JSON_ENV_ENTRY);
-
+        String json = System.getenv(CONFIG_JSON_ENV_ENTRY);
+        if (fileLoc == null && json != null) {
             appDefaults = fromStream(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
 
             return appDefaults;
         }
-        Preconditions.checkNotNull(fileLoc, "No " + CONFIG_FILE_ENV_ENTRY + " entry was found in your environment variables.");
+
+        if (fileLoc == null) {
+            InputStream stream = BotApplication.class.getResourceAsStream("/config.xml");
+            return fromStream(stream);
+        }
 
         File file = new File(fileLoc);
         appDefaults = fromFile(fileLoc, file);
@@ -225,6 +229,7 @@ public final class ConfigReader {
         }
 
 
+        stream.close();
         return new Config(new CommandConfig(prefixes, includesMention, data),
                 new ERLCConfig(sender, messages, interval, channels, alwaysAllowed, offDutyAllowed));
     }
