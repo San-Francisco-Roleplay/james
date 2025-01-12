@@ -12,9 +12,9 @@
         </Root>
         <Logger name="net.dv8tion.jda" level="warn" additivity="false"/>
 
-<!--         <Logger name="com.computiotion.sfrp.bot.commands.Command" level="info" additivity="false">
+        <Logger name="com.computiotion.sfrp.bot.commands.Command" level="info" additivity="false">
             <AppenderRef ref="SysOut"/>
-        </Logger> -->
+        </Logger>
         <Logger name="com.computiotion.sfrp.bot.listeners.MessageListener" level="info" additivity="false">
             <AppenderRef ref="SysOut"/>
         </Logger>
