@@ -73,6 +73,10 @@
         </messages>
         <commands>
             <sender>1324505594333233152</sender>
+            <on-duty-roles>
+                <role>1322094623853777007</role>
+                <role>1324821333749796985</role>
+            </on-duty-roles>
             <channels>
                 <power-commands>1324440705984364574</power-commands>
                 <offduty-commands>1324440780043190282</offduty-commands>
