@@ -39,7 +39,7 @@ public class Session extends Command {
                 .forEach(message -> message.delete().queue());
     }
 
-    @CommandExecutor(value = "poll", level = PermissionLevel.HighRank, description = "Sends out a session poll message.")
+    @CommandExecutor(value = "poll", level = PermissionLevel.HighRank, description = "Sends out a session poll message.", rate = RateLimitPreset.Session)
     public void poll(@NotNull CommandInteraction interaction) throws ParserConfigurationException, IOException, SAXException {
         Config config = ConfigReader.fromApplicationDefaults();
         SessionConfig sessions = config.getSessions();
@@ -128,7 +128,7 @@ public class Session extends Command {
     }
 
 
-    @CommandExecutor(value = "ssu", level = PermissionLevel.HighRank, description = "Sends an SSU message.")
+    @CommandExecutor(value = "ssu", level = PermissionLevel.HighRank, description = "Sends an SSU message.", rate = RateLimitPreset.Session)
     public void ssu(@NotNull CommandInteraction interaction) throws ParserConfigurationException, IOException, SAXException {
         Config config = ConfigReader.fromApplicationDefaults();
         SessionConfig sessions = config.getSessions();
@@ -219,7 +219,7 @@ public class Session extends Command {
         }
     }
 
-    @CommandExecutor(value = "lp", level = PermissionLevel.HighRank, description = "Sends out a \"low on players\" message.")
+    @CommandExecutor(value = "lp", level = PermissionLevel.HighRank, description = "Sends out a \"low on players\" message.", rate = RateLimitPreset.Session)
     public void lowPlayers(CommandInteraction interaction) throws ParserConfigurationException, IOException, SAXException {
         Config config = ConfigReader.fromApplicationDefaults();
         SessionConfig sessions = config.getSessions();
@@ -298,7 +298,7 @@ public class Session extends Command {
         }
     }
 
-    @CommandExecutor(value = "ssd", level = PermissionLevel.HighRank, description = "Sends out a \"no active sessions\" message.")
+    @CommandExecutor(value = "ssd", level = PermissionLevel.HighRank, description = "Sends out a \"no active sessions\" message.", rate = RateLimitPreset.Session)
     public void ssd(CommandInteraction interaction) throws ParserConfigurationException, IOException, SAXException {
         Config config = ConfigReader.fromApplicationDefaults();
         SessionConfig sessions = config.getSessions();
