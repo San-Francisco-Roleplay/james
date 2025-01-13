@@ -74,7 +74,7 @@ public class Session extends Command {
         TextChannel channel = jda.getTextChannelById(sessions.getChannel());
 
         if (channel == null) {
-            log.error("The Sessions channel was resolved to be null.");
+            log.error("The Sessions channel was resolved to be null: " + sessions.getChannel());
             MessageEmbed error = new EmbedBuilder()
                     .setColor(Colors.Red.getColor())
                     .setTitle("Configuration Error")
@@ -168,7 +168,7 @@ public class Session extends Command {
         TextChannel channel = jda.getTextChannelById(sessions.getChannel());
 
         if (channel == null) {
-            log.error("The Sessions channel was resolved to be null.");
+            log.error("The Sessions channel was resolved to be null: " + sessions.getChannel());
             MessageEmbed error = new EmbedBuilder()
                     .setColor(Colors.Red.getColor())
                     .setTitle("Configuration Error")
@@ -250,7 +250,7 @@ public class Session extends Command {
         TextChannel channel = jda.getTextChannelById(sessions.getChannel());
 
         if (channel == null) {
-            log.error("The Sessions channel was resolved to be null.");
+            log.error("The Sessions channel was resolved to be null: " + sessions.getChannel());
             MessageEmbed error = new EmbedBuilder()
                     .setColor(Colors.Red.getColor())
                     .setTitle("Configuration Error")
@@ -332,9 +332,8 @@ public class Session extends Command {
 
         JDA jda = user.getJDA();
         TextChannel channel = jda.getTextChannelById(sessions.getChannel());
-
         if (channel == null) {
-            log.error("The Sessions channel was resolved to be null.");
+            log.error("The Sessions channel was resolved to be null: " + sessions.getChannel());
             MessageEmbed error = new EmbedBuilder()
                     .setColor(Colors.Red.getColor())
                     .setTitle("Configuration Error")
