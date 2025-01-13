@@ -219,7 +219,7 @@ public class Session extends Command {
         }
     }
 
-    @CommandExecutor(value = "lp", level = PermissionLevel.HighRank)
+    @CommandExecutor(value = "lp", level = PermissionLevel.HighRank, description = "Sends out a \"low on players\" message.")
     public void lowPlayers(CommandInteraction interaction) throws ParserConfigurationException, IOException, SAXException {
         Config config = ConfigReader.fromApplicationDefaults();
         SessionConfig sessions = config.getSessions();
@@ -298,7 +298,7 @@ public class Session extends Command {
         }
     }
 
-    @CommandExecutor(value = "ssd", level = PermissionLevel.HighRank)
+    @CommandExecutor(value = "ssd", level = PermissionLevel.HighRank, description = "Sends out a \"no active sessions\" message.")
     public void ssd(CommandInteraction interaction) throws ParserConfigurationException, IOException, SAXException {
         Config config = ConfigReader.fromApplicationDefaults();
         SessionConfig sessions = config.getSessions();
