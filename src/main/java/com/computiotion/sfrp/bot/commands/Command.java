@@ -6,7 +6,6 @@ import com.computiotion.sfrp.bot.config.*;
 import com.computiotion.sfrp.bot.templates.InternalError;
 import com.computiotion.sfrp.bot.templates.*;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -250,14 +249,16 @@ public abstract class Command {
         if (base == PermissionLevelDefault.ALLOW) {
             if (guilds.deny().contains(guild.getId())) return PermissionLevelDefault.DENY;
             if (channels.deny().contains(message.getChannelId())) return PermissionLevelDefault.DENY;
-            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.deny().contains(role))) return PermissionLevelDefault.DENY;
+            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.deny().contains(role)))
+                return PermissionLevelDefault.DENY;
             if (users.deny().contains(author.getId())) return PermissionLevelDefault.DENY;
             log.debug("No overriding clauses found for " + base.name() + " – is this an error?");
         } else if (base == PermissionLevelDefault.DENY) {
             if (guilds.allow().contains(guild.getId())) return PermissionLevelDefault.ALLOW;
             if (channels.allow().contains(message.getChannelId())) return PermissionLevelDefault.ALLOW;
-            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.allow().contains(role))) return PermissionLevelDefault.ALLOW;
-        if (users.allow().contains(author.getId())) return PermissionLevelDefault.ALLOW;
+            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.allow().contains(role)))
+                return PermissionLevelDefault.ALLOW;
+            if (users.allow().contains(author.getId())) return PermissionLevelDefault.ALLOW;
             log.debug("No overriding clauses found for " + base.name() + " – is this an error?");
         }
 
@@ -295,13 +296,15 @@ public abstract class Command {
         if (base == PermissionLevelDefault.ALLOW) {
             if (guilds.deny().contains(guild.getId())) return PermissionLevelDefault.DENY;
             if (channels.deny().contains(interaction.getChannelId())) return PermissionLevelDefault.DENY;
-            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.deny().contains(role))) return PermissionLevelDefault.DENY;
+            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.deny().contains(role)))
+                return PermissionLevelDefault.DENY;
             if (users.deny().contains(author.getId())) return PermissionLevelDefault.DENY;
             log.debug("No overriding clauses found for " + base.name() + " – is this an error?");
         } else if (base == PermissionLevelDefault.DENY) {
             if (guilds.allow().contains(guild.getId())) return PermissionLevelDefault.ALLOW;
             if (channels.allow().contains(interaction.getChannelId())) return PermissionLevelDefault.ALLOW;
-            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.allow().contains(role))) return PermissionLevelDefault.ALLOW;
+            if (userRoles.stream().map(ISnowflake::getId).anyMatch(role -> roles.allow().contains(role)))
+                return PermissionLevelDefault.ALLOW;
             if (users.allow().contains(author.getId())) return PermissionLevelDefault.ALLOW;
             log.debug("No overriding clauses found for " + base.name() + " – is this an error?");
         }
@@ -367,16 +370,32 @@ public abstract class Command {
             subToMethod.put(name, method);
         }
 
+        if (subToMethod.containsKey("*")) {
+            throw new IllegalArgumentException("Subcommands may not contain an *");
+        }
+
         boolean isMain = subToMethod.containsKey("");
         log.trace("isMain: " + isMain);
 
         if (split.length == 1 && !isMain) {
             log.trace("Missing subcommand.");
             message.removeReaction(Emoji.Loading.toJda()).complete();
+
+
             message.replyEmbeds(new EmbedBuilder()
                     .setTitle("Subcommand Required")
-                    .setDescription(String.format("Available sub-commands include: \n```\n%s\n```", subToMethod.keySet()
-                            .stream().map(s -> commandStr + " " + s).reduce((s1, s2) -> s1 + "\n" + s2).orElse("")))
+                    .setDescription(String.format("Available sub-commands include: \n```\n%s\n```", subToMethod.entrySet()
+                            .stream()
+                            .filter(entry -> {
+                                try {
+                                    return canExecute(message, entry.getValue().getAnnotation(CommandExecutor.class)) == PermissionLevelDefault.ALLOW;
+                                } catch (ParserConfigurationException | IOException | SAXException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            })
+                            .map(Map.Entry::getKey)
+                            .map(s -> commandStr + " " + s)
+                            .reduce((s1, s2) -> s1 + "\n" + s2).orElse("")))
                     .setColor(Colors.Red.getColor())
                     .build()).complete();
             return;
@@ -396,6 +415,7 @@ public abstract class Command {
         CommandExecutor executor = method.getAnnotation(CommandExecutor.class);
 
         if (canExecute(message, executor) == PermissionLevelDefault.DENY) {
+            log.debug("Lacking permissions to run command, returning.");
             Config config = ConfigReader.fromApplicationDefaults();
 
             CommandConfig commands = config.getCommands();
@@ -409,6 +429,7 @@ public abstract class Command {
             }
 
             message.replyEmbeds(new NoPerms().makeEmbed().build()).complete();
+            log.debug("Finished returning.");
             return;
         }
 
@@ -437,6 +458,12 @@ public abstract class Command {
 
         if (argList.size() < requiredParams.size()) {
             log.trace("Fewer provided arguments that required parameters.");
+            message.removeReaction(Emoji.Loading.toJda()).complete();
+            message.replyEmbeds(new InvalidFormat(generateUsage(commandStr + " " + subCommand, params)).makeEmbed().build()).complete();
+            return;
+        }
+
+        if (argList.size() > params.size()) {
             message.removeReaction(Emoji.Loading.toJda()).complete();
             message.replyEmbeds(new InvalidFormat(generateUsage(commandStr + " " + subCommand, params)).makeEmbed().build()).complete();
             return;
@@ -578,7 +605,9 @@ public abstract class Command {
             computed.add(null);
         }
 
-        MessageCommandInteraction interaction = new MessageCommandInteraction(message,
+        MessageCommandInteraction interaction = new MessageCommandInteraction(
+                method,
+                message,
                 message.getAuthor(),
                 message.getGuild(),
                 CommandInteractionType.MESSAGE);
@@ -655,8 +684,18 @@ public abstract class Command {
             log.trace("Missing subcommand.");
             interaction.replyEmbeds(new EmbedBuilder()
                             .setTitle("Subcommand Required")
-                            .setDescription(String.format("Available sub-commands include: \n```\n%s\n```", subToMethod.keySet()
-                                    .stream().map(s -> commandStr + " " + s).reduce((s1, s2) -> s1 + "\n" + s2).orElse("")))
+                            .setDescription(String.format("Available sub-commands include: \n```\n%s\n```", subToMethod.entrySet()
+                                    .stream()
+                                    .filter(entry -> {
+                                        try {
+                                            return canExecute(interaction, entry.getValue().getAnnotation(CommandExecutor.class)) == PermissionLevelDefault.ALLOW;
+                                        } catch (ParserConfigurationException | IOException | SAXException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    })
+                                    .map(Map.Entry::getKey)
+                                    .map(s -> commandStr + " " + s)
+                                    .reduce((s1, s2) -> s1 + "\n" + s2).orElse("")))
                             .setColor(Colors.Red.getColor())
                             .build())
                     .setEphemeral(true)
@@ -679,6 +718,7 @@ public abstract class Command {
         CommandExecutor executor = method.getAnnotation(CommandExecutor.class);
 
         if (canExecute(interaction, executor) == PermissionLevelDefault.DENY) {
+            log.trace("Lacking permissions, returning.");
             Config config = ConfigReader.fromApplicationDefaults();
 
             CommandConfig commands = config.getCommands();
@@ -742,7 +782,9 @@ public abstract class Command {
             computed.add(null);
         }
 
-        SlashCommandInteraction slashInteraction = new SlashCommandInteraction(interaction,
+        SlashCommandInteraction slashInteraction = new SlashCommandInteraction(
+                method,
+                interaction,
                 interaction.getUser(),
                 interaction.getGuild(),
                 CommandInteractionType.SLASH);
@@ -756,7 +798,7 @@ public abstract class Command {
             log.debug("Types of computed: [" + computed.stream().map(obj -> {
                 if (obj == null) return "null";
                 return obj.getClass().getName();
-            }).collect(Collectors.joining(", ")).toString() + "]");
+            }).collect(Collectors.joining(", ")) + "]");
 
             method.invoke(command, computed.toArray());
             log.debug("Method invoked successfully");

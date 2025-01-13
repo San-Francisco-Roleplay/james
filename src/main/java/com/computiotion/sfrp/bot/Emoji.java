@@ -12,7 +12,17 @@ public enum Emoji {
     Loading("Loading", "1324941983663394898", true),
     TimeAccepted("<:TimeAccepted:1315093012128469032>"),
     TimeAwaiting("<:TimeAwaiting:1315093013176778823>"),
-    TimeDenied("<:TimeRejected:1315093010383638609>");
+    TimeDenied("<:TimeRejected:1315093010383638609>"),
+    InfractWarning("<:InfractWarning:1327762487654879393>"),
+    InfractStrike("<:InfractStrike:1327762483057790986>"),
+    InfractSuspend("<:InfractSuspend:1327762484215419001>"),
+    InfractTrial("<:InfractTrial:1327762486480605215>"),
+    InfractLeave("<:InfractLeave:1327763138891747430>"),
+    InfractDemotion("<:InfractDemotion:1327762481799757965>"),
+    InfractTermination("<:InfractTermination:1327762485440155688>"),
+    ContentBullet("<:ContentBullet:1325277820896935988>"),
+    ContentPing("<:ContentMention:1325277824315297894>"),
+    ContentInfo("<:ContentInfo:1325277821983129630>");
 
     private final String name;
     private final String id;

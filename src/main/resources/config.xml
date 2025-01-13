@@ -9,12 +9,42 @@
                 </roles>
                 <silent>true</silent>
             </Staff>
+            <HighRank base="deny">
+                <roles>
+                    <allow>1322086428598997095</allow> <!-- SFRP - HR -->
+                </roles>
+                <silent>true</silent>
+            </HighRank>
             <InternalAffairs base="deny">
                 <roles>
                     <allow>1322086591140724817</allow> <!-- SFRP - IA -->
                 </roles>
                 <silent>true</silent>
             </InternalAffairs>
+            <SeniorHighRank base="deny">
+                <roles>
+                    <allow>1322086088252063774</allow> <!-- SFRP - SHR -->
+                </roles>
+                <silent>true</silent>
+            </SeniorHighRank>
+            <BoardOfExecutives base="deny">
+                <roles>
+                    <allow>1322084916900397158</allow> <!-- SFRP - BOE -->
+                </roles>
+                <silent>true</silent>
+            </BoardOfExecutives>
+            <Management base="deny">
+                <roles>
+                    <allow>1324516124095938671</allow> <!-- SFRP - BOE -->
+                </roles>
+                <silent>true</silent>
+            </Management>
+            <Supervisors base="deny">
+                <roles>
+                    <allow>1322087570074767370</allow> <!-- SFRP - BOE -->
+                </roles>
+                <silent>true</silent>
+            </Supervisors>
             <Developer base="deny">
                 <roles>
                     <allow>1323826184689291314</allow> <!-- SFRP - Development Team -->
@@ -30,7 +60,7 @@
             <Disabled base="deny" />
         </Levels>
         <MessagePrefixes>
-            <prefix>-</prefix> <!-- Avoid using prefixes in use by other bots. -->
+            <prefix>.</prefix> <!-- Avoid using prefixes in use by other bots. -->
             <mention />
         </MessagePrefixes>
     </Commands>
@@ -56,4 +86,27 @@
             </off-duty-exempt>
         </commands>
     </ERLC>
+    <Staff>
+        <logs>
+            <infractions>1324437209268359299</infractions>
+            <promotions>1324437121615794299</promotions>
+        </logs>
+        <roles>
+            <SeniorManagement>1323829322133409883</SeniorManagement>
+            <Supervisors>1322087570074767370</Supervisors>
+            <Management>1324516124095938671</Management>
+            <BoardOfExecutives>1322084916900397158</BoardOfExecutives>
+            <SeniorHighRank>1322086088252063774</SeniorHighRank>
+            <Developer>1323826184689291314</Developer>
+            <InternalAffairs>1322086591140724817</InternalAffairs>
+            <HighRank>1322086428598997095</HighRank>
+            <Staff>1322229678181978292</Staff>
+        </roles>
+    </Staff>
+    <Session>
+        <channel>1324174360763699330</channel>
+        <ping>1324937233794597026</ping>
+        <code>sfcr</code>
+        <name>San Francisco City Roleplay</name>
+    </Session>
 </Configuration>

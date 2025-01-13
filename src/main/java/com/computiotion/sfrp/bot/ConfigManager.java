@@ -19,6 +19,10 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class ConfigManager implements WebMvcConfigurer {
+    public static final String REDIS_PREFIX_PERM_COMPONENT = "component:";
+    public static final String REDIS_PREFIX_INFRACTION_HISTORY = "staff:";
+    public static final String REDIS_PREFIX_INFRACTION_COLLECTION = "infract:coll:";
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

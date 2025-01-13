@@ -9,8 +9,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 @CommandController("bam")
-public class Ban extends Command {
-    private static final Log log = LogFactory.getLog(Ban.class);
+public class Bam extends Command {
+    private static final Log log = LogFactory.getLog(Bam.class);
 
     @CommandExecutor(level = PermissionLevel.Staff)
     public void ban(@NotNull CommandInteraction interaction, @User("member") net.dv8tion.jda.api.entities.User user, @Text(value = "reason", required = false) String reason) {

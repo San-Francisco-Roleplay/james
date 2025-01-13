@@ -3,9 +3,14 @@ package com.computiotion.sfrp.bot.commands;
 public enum PermissionLevel {
     Enabled("enabled"),
     Staff("staff"),
-    InternalAffairs("ia"),
+    HighRank("hr"),
     Developer("dev"),
-    SeniorManagement("seniormanagement"),
+    InternalAffairs("ia"),
+    SeniorHighRank("shr"),
+    BoardOfExecutives("boe"),
+    Management("m"),
+    Supervisors("svb"),
+    SeniorManagement("sm"),
     Disabled("disabled");
 
     private final String code;

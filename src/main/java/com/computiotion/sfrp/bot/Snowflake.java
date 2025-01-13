@@ -29,10 +29,10 @@ public class Snowflake {
     private Integer increment;
 
     public Snowflake(@Nullable Timestamp epoch, @Nullable Integer increment, @Nullable Integer pid, @Nullable Integer worker) {
-        this.epoch = epoch;
-        this.increment = increment;
-        this.pid = pid;
-        this.worker = worker;
+        this.epoch = epoch == null ? new Timestamp(0) : epoch;
+        this.increment = increment == null ? 0 : increment;
+        this.pid = pid == null ? 0 : pid;
+        this.worker = worker == null ? 0 : worker;
     }
 
     public Snowflake() {
@@ -59,6 +59,9 @@ public class Snowflake {
     }
 
     public Snowflake increaseIncrement() { this.increment++; return this; }
+
+    public String nextId() { this.increment++; return generate(); }
+
 
     public int getWorker() {
         return worker;

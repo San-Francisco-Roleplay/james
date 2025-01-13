@@ -7,7 +7,6 @@ import com.computiotion.sfrp.bot.config.erlc.ERLCConfig;
 import com.computiotion.sfrp.bot.config.erlc.Message;
 import com.computiotion.sfrp.bot.config.erlc.MessageType;
 import com.computiotion.sfrp.bot.time.TimeParser;
-import com.google.common.base.Preconditions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Contract;
@@ -191,9 +190,11 @@ public final class ConfigReader {
         }
 
         Node nCommandLogs = getChildNodeByTagName(erlc, "commands");
+        Node nOnDutyRoleContainer = getChildNodeByTagName(nCommandLogs, "on-duty-roles");
         Node nSender = getChildNodeByTagName(nCommandLogs, "sender");
         Node nChannels = getChildNodeByTagName(nCommandLogs, "channels");
         HashMap<CommandLogType, String> channels = new HashMap<>();
+        HashSet<String> onDutyRoles = new HashSet<>();
 
         String sender = nSender.getTextContent();
         for (CommandLogType type : CommandLogType.values()) {
@@ -204,6 +205,11 @@ public final class ConfigReader {
 
             String id = node.getTextContent();
             channels.put(type, id);
+        }
+
+        List<Node> roles = getChildNodesByTagName(asElement(nOnDutyRoleContainer), "role");
+        for (Node role : roles) {
+            onDutyRoles.add(role.getTextContent());
         }
 
         Node nAllowed = getChildNodeByTagName(nCommandLogs, "always-allowed-commands");
@@ -228,9 +234,42 @@ public final class ConfigReader {
             offDutyAllowed.add(role);
         }
 
+        Node staff = getChildNodeByTagName(root, "Staff");
+        Node logs = getChildNodeByTagName(staff, "logs");
+
+        Node nInfractionLogs = getChildNodeByTagName(logs, "infractions");
+        Node nPromoLogs = getChildNodeByTagName(logs, "promotions");
+
+        String infractionLogs = nInfractionLogs.getTextContent();
+        String promoLogs = nPromoLogs.getTextContent();
+
+        Node nRoles = getChildNodeByTagName(staff, "roles");
+
+        HashMap<StaffPermission, String> staffRoles = new HashMap<>();
+
+        for (StaffPermission type : StaffPermission.values()) {
+            Node node = getChildNodeByTagName(asElement(nRoles), type.name());
+
+            String id = node.getTextContent();
+            staffRoles.put(type, id);
+        }
+
+        Node nSession = getChildNodeByTagName(root, "Session");
+
+        Node nChannel = getChildNodeByTagName(nSession, "channel");
+        Node nPing = getChildNodeByTagName(nSession, "ping");
+        Node nCode = getChildNodeByTagName(nSession, "code");
+        Node nServerName = getChildNodeByTagName(nSession, "name");
+
+        String channel = nChannel.getTextContent();
+        String ping = nPing.getTextContent();
+        String code = nCode.getTextContent();
+        String serverName = nServerName.getTextContent();
 
         stream.close();
         return new Config(new CommandConfig(prefixes, includesMention, data),
-                new ERLCConfig(sender, messages, interval, channels, alwaysAllowed, offDutyAllowed));
+                new ERLCConfig(sender, messages, interval, channels, alwaysAllowed, offDutyAllowed, onDutyRoles),
+                new StaffConfig(infractionLogs, promoLogs, staffRoles),
+                new SessionConfig(channel, ping, code, serverName));
     }
 }

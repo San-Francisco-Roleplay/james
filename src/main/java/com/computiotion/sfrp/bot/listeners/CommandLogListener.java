@@ -98,13 +98,8 @@ public class CommandLogListener extends ListenerAdapter {
 
         boolean offDutyPing = config.getErlc().getAlwaysAllowedCommands().contains(base) || exempt;
 
-        List<@NotNull Shift> shifts = ERMUtils.getActiveShifts();
-        List<String> userIds = shifts.stream().map(Shift::getUserId).toList();
-        userIds.forEach(logger::trace);
-
-        if (!userIds.contains(discordId)) {
-            types.add(CommandLogType.OffDuty);
-        }
+        if (member.getRoles().stream().map(ISnowflake::getId)
+                .noneMatch(role -> erlc.getOnDutyRoles().contains(role))) types.add(CommandLogType.OffDuty);
 
         HashMap<CommandLogType, TextChannel> channels = new HashMap<>();
         for (CommandLogType type : types) {
@@ -119,7 +114,6 @@ public class CommandLogListener extends ListenerAdapter {
             channels.put(type, channel);
         }
 
-        if (discordId == null) return;
 
         for (Map.Entry<CommandLogType, TextChannel> entry : channels.entrySet()) {
             CommandLogType type = entry.getKey();

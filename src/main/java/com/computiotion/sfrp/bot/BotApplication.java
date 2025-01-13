@@ -28,14 +28,14 @@ import java.util.Timer;
 
 @SpringBootApplication
 public class BotApplication {
-
+    private static JDA jda;
     private static final Log log = LogFactory.getLog(BotApplication.class);
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, ParserConfigurationException, SAXException {
         SpringApplication.run(BotApplication.class, args);
 
         log.debug("Finding command classes.");
-        ClassTools.getSubclassesOf("com.computiotion.sfrp.bot.commands", Command.class).forEach(command -> {
+        ClassTools.getSubclassesOf("com.computiotion.sfrp.bot", Command.class).forEach(command -> {
             Constructor<? extends Command> constructor;
             try {
                 constructor = command.getConstructor();
@@ -57,7 +57,7 @@ public class BotApplication {
 
         log.debug("Finished searching commands.");
 
-        JDA jda = JDABuilder.create(ConfigManager.getBotToken(), EnumSet.of(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS))
+        jda = JDABuilder.create(ConfigManager.getBotToken(), EnumSet.of(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS))
                 .addEventListeners(new MessageListener(), new SlashCommandListener(), new GuildReadyListener(), new CommandLogListener())
                 .build();
 
@@ -71,7 +71,10 @@ public class BotApplication {
 
         t.scheduleAtFixedRate(mCron, 0, erlc.getMessageDelay());
 
-        jda.getPresence().setPresence(OnlineStatus.IDLE, Activity.customStatus("📍sfrp.computiotion.com"));
+        jda.getPresence().setPresence(OnlineStatus.IDLE, Activity.customStatus("📍: sfrp.computiotion.com"));
     }
 
+    public static JDA getJda() {
+        return jda;
+    }
 }

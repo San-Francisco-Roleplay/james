@@ -14,14 +14,16 @@ public class ERLCConfig {
     private final HashMap<CommandLogType, String> logs;
     private final Set<String> alwaysAllowed;
     private final Set<String> offDutyExempt;
+    private final Set<String> onDutyRoles;
 
-    public ERLCConfig(@NotNull String logSender, @NotNull List<Message> messages, long messageDelay, @NotNull HashMap<CommandLogType, String> logs, Set<String> alwaysAllowed, Set<String> offDutyExempt) {
+    public ERLCConfig(@NotNull String logSender, @NotNull List<Message> messages, long messageDelay, @NotNull HashMap<CommandLogType, String> logs, Set<String> alwaysAllowed, Set<String> offDutyExempt, Set<String> onDutyRoles) {
         this.logSender = logSender;
         this.messages = messages;
         this.messageDelay = messageDelay;
         this.logs = logs;
         this.alwaysAllowed = alwaysAllowed;
         this.offDutyExempt = offDutyExempt;
+        this.onDutyRoles = onDutyRoles;
     }
 
     @UnmodifiableView
@@ -53,5 +55,9 @@ public class ERLCConfig {
     @UnmodifiableView
     public Set<String> getOffDutyExempt() {
         return Collections.unmodifiableSet(offDutyExempt);
+    }
+
+    public Set<String> getOnDutyRoles() {
+        return Collections.unmodifiableSet(onDutyRoles);
     }
 }
