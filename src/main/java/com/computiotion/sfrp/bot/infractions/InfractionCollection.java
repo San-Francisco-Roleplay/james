@@ -18,7 +18,7 @@ public class InfractionCollection implements DatabaseSaveable {
 
     private List<String> userId;
     private transient String id;
-    private Set<Infraction> inractions;
+    private Set<Infraction> infractions;
     private Instant at;
 
     public static InfractionCollection getCollection(String id) {
