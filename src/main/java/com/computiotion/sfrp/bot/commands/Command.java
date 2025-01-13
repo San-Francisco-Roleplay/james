@@ -566,9 +566,22 @@ public abstract class Command {
             } else if (type == ParameterType.TEXT) {
                 computed.add(arg);
             } else if (type == ParameterType.USER) {
-                String finalArg = arg;
-                net.dv8tion.jda.api.entities.User user = message.getMentions().getUsers().stream()
-                        .filter(mem -> mem.getAsMention().equalsIgnoreCase(finalArg) || mem.getId().equalsIgnoreCase(finalArg))
+                String finalArg = arg.trim();
+                net.dv8tion.jda.api.entities.User user = message.getGuild().getMembers().stream()
+                        .map(Member::getUser)
+                        .filter(mem -> {
+                            log.info("Checking: " + finalArg);
+
+                            String mention = mem.getAsMention();
+                            String id = mem.getId();
+                            String name = mem.getName();
+
+                            log.info("Against " + mention + ", " + id + ", " + name);
+
+                            if (finalArg.equalsIgnoreCase(mention)) return true;
+                            if (finalArg.equalsIgnoreCase(id)) return true;
+                            return finalArg.equalsIgnoreCase(name);
+                        })
                         .findFirst()
                         .orElse(null);
 
