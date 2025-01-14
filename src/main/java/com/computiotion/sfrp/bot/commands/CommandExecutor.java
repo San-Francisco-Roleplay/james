@@ -19,4 +19,6 @@ public @interface CommandExecutor {
     String description() default "No description was provided.";
 
     PermissionLevel level() default PermissionLevel.Enabled;
+
+    RateLimitPreset rate() default RateLimitPreset.Infinite;
 }

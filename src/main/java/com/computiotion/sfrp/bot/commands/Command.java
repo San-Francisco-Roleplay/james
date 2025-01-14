@@ -5,6 +5,10 @@ import com.computiotion.sfrp.bot.Emoji;
 import com.computiotion.sfrp.bot.config.*;
 import com.computiotion.sfrp.bot.templates.InternalError;
 import com.computiotion.sfrp.bot.templates.*;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.local.LocalBucket;
+import io.github.bucket4j.local.LocalBucketBuilder;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
@@ -26,12 +30,14 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.time.Duration;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public abstract class Command {
+    private static final HashMap<String, HashMap<String, LocalBucket>> rateLimits = new HashMap<>();
     public static final Set<Command> commands = new HashSet<>();
     private static final Set<Class<? extends Annotation>> parameterAnnotations = Set.of(Boolean.class, Channel.class, Integer.class, Mentionable.class, Number.class, Role.class, Text.class, User.class);
     private static final Map<String, java.lang.Boolean> bools = Map.of("true", true, "false", false, "yes", true, "no", false);
@@ -39,6 +45,7 @@ public abstract class Command {
 
     public static void registerCommand(Command command) {
         commands.add(command);
+
     }
 
     /**
@@ -433,6 +440,28 @@ public abstract class Command {
             return;
         }
 
+        String fullCmd = (commandStr + " " + subCommand).trim();
+        RateLimitPreset preset = executor.rate();
+        LocalBucketBuilder bucket = preset.getBucket();
+        net.dv8tion.jda.api.entities.User author = message.getAuthor();
+
+        if (bucket != null) {
+            if (!rateLimits.containsKey(fullCmd)) rateLimits.put(fullCmd, new HashMap<>());
+            HashMap<String, LocalBucket> rateLimitMap = rateLimits.get(fullCmd);
+
+            String authorId = author.getId();
+
+            if (!rateLimitMap.containsKey(authorId)) rateLimitMap.put(authorId, bucket.build());
+            LocalBucket localBucket = rateLimitMap.get(authorId);
+            if (!localBucket.tryConsume(1)) {
+                // rate limited
+
+                message.removeReaction(Emoji.Loading.toJda()).complete();
+                message.replyEmbeds(new RateLimit().makeEmbed().build()).complete();
+                return;
+            }
+        }
+
         log.trace("Parsing method for parameters.");
         List<ParsedParameter> params = parseMethod(method);
         log.trace("Finished parsing, filtering to required.");
@@ -585,6 +614,7 @@ public abstract class Command {
                         .findFirst()
                         .orElse(null);
 
+
                 if (user == null) {
                     log.trace("Value is not valid user: " + arg);
                     message.removeReaction(Emoji.Loading.toJda()).complete();
@@ -621,7 +651,7 @@ public abstract class Command {
         MessageCommandInteraction interaction = new MessageCommandInteraction(
                 method,
                 message,
-                message.getAuthor(),
+                author,
                 message.getGuild(),
                 CommandInteractionType.MESSAGE);
 
@@ -747,6 +777,30 @@ public abstract class Command {
                     .setEphemeral(true)
                     .complete();
             return;
+        }
+
+        String fullCmd = (commandStr + " " + subCommand).trim();
+        RateLimitPreset preset = executor.rate();
+        LocalBucketBuilder bucket = preset.getBucket();
+        net.dv8tion.jda.api.entities.User author = interaction.getUser();
+
+        if (bucket != null) {
+            if (!rateLimits.containsKey(fullCmd)) rateLimits.put(fullCmd, new HashMap<>());
+            HashMap<String, LocalBucket> rateLimitMap = rateLimits.get(fullCmd);
+
+            String authorId = author.getId();
+
+            if (!rateLimitMap.containsKey(authorId)) rateLimitMap.put(authorId, bucket.build());
+            LocalBucket localBucket = rateLimitMap.get(authorId);
+            if (!localBucket.tryConsume(1)) {
+                // rate limited
+
+                interaction
+                        .replyEmbeds(new RateLimit().makeEmbed().build())
+                        .setEphemeral(true)
+                        .complete();
+                return;
+            }
         }
 
         log.trace("Parsing method for parameters.");
