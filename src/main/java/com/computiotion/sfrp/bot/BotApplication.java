@@ -71,7 +71,7 @@ public class BotApplication {
 
         t.scheduleAtFixedRate(mCron, 0, erlc.getMessageDelay());
 
-        jda.getPresence().setPresence(OnlineStatus.IDLE, Activity.customStatus("📍: sfrp.computiotion.com"));
+        jda.getPresence().setPresence(OnlineStatus.ONLINE, Activity.customStatus("📍 /help"));
     }
 
     public static JDA getJda() {
