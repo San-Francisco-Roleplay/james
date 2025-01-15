@@ -11,8 +11,40 @@ services:
   server:
     build:
       context: .
+      args:
+        - SENTRY_AUTH=${SENTRY_AUTH_TOKEN}
+        - SENTRY_ORG=${SENTRY_ORG}
+        - SENTRY_PROJECT=${SENTRY_PROJECT}
     ports:
       - 8080:8080
+    environment:
+      - SENTRY_DSN=${SENTRY_DSN}
+      - SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+      - SENTRY_ORG=${SENTRY_ORG}
+      - SENTRY_PROJECT=${SENTRY_PROJECT}
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - ERLC_API_KEY=${ERLC_API_KEY}
+      - ERM_API_KEY=${ERM_API_KEY}
+      - ERM_GUILD_ID=${ERM_GUILD_ID}
+      - BLOXLINK_API_KEY=${BLOXLINK_API_KEY}
+      - REDIS_URL=${REDIS_URL}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT}
+      - SETUP_PASSWORD=${SETUP_PASSWORD}
+    secrets:
+      - sentry_dsn
+      - sentry_org
+      - sentry_project
+      - discord_token
+      - sentry_auth
+      - erlc_api
+      - erm_api_key
+      - erm_guild
+      - bloxlink_api_key
+      - redis_url
+      - redis_password
+      - redis_port
+      - setup_password
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
@@ -43,7 +75,31 @@ services:
 #       retries: 5
 # volumes:
 #   db-data:
-# secrets:
-#   db-password:
-#     file: db/password.txt
 
+secrets:
+  discord_token:
+    environment: DISCORD_TOKEN
+  sentry_auth:
+    environment: SENTRY_AUTH_TOKEN
+  sentry_dsn:
+    environment: SENTRY_DSN
+  sentry_org:
+    environment: SENTRY_ORG
+  sentry_project:
+    environment: SENTRY_PROJECT
+  erlc_api:
+    environment: ERLC_API_KEY
+  erm_api_key:
+    environment: ERM_API_KEY
+  erm_guild:
+    environment: ERM_GUILD_ID
+  bloxlink_api_key:
+    environment: BLOXLINK_API_KEY
+  redis_url:
+    environment: REDIS_URL
+  redis_password:
+    environment: REDIS_PASSWORD
+  redis_port:
+    environment: REDIS_PORT
+  setup_password:
+    environment: SETUP_PASSWORD
