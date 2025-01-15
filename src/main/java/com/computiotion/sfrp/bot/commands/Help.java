@@ -28,9 +28,11 @@ public class Help extends Command {
                 .setDescription("James is SFRP's approach to staff moderation and many other utility features.")
                 .addField("Bot Information", """
 > **Website:** [View Website](https://sfrp.computiotion.com)
+> **Github:** [Open](https://github.com/San-Francisco-Roleplay)
 > **Support:** [Join Development Server](https://discord.gg/y2K8ZPZJx3)
 > **SFRP:** [Join Main Server](https://discord.gg/nfUPYTwyF3)
 > **Documentation**: [View Commands](https://docs.sfrp.computiotion.com)""", false)
+                .setFooter("James ALPHA 0.0.0")
                 .build();
 
         if (interaction.getType() == CommandInteractionType.SLASH) {
