@@ -35,11 +35,19 @@ FROM deps as package
 
 WORKDIR /build
 
+ARG SENTRY_AUTH
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT
+
+ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH
+ENV SENTRY_ORG=$SENTRY_ORG
+ENV SENTRY_PROJECT=$SENTRY_PROJECT
+
 COPY ./src src/
 RUN --mount=type=bind,source=pom.xml,target=pom.xml \
     --mount=type=cache,target=/root/.m2 \
     ./mvnw package -DskipTests && \
-    mv target/$(./mvnw help:evaluate -Dexpression=project.artifactId -q -DforceStdout)-$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout).jar target/app.jar
+    mv target/$(./mvnw help:evaluate -Dexpression=project.artifactId -q -DforceStdout)-$(./mvnw -DSENTRY_AUTH_TOKEN=$SENTRY_AUTH -DSENTRY_PROJECT=$SENTRY_PROJECT -DSENTRY_ORG=$SENTRY_ORG help:evaluate -Dexpression=project.version -q -DforceStdout).jar target/app.jar
 
 ################################################################################
 
