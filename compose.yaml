@@ -11,6 +11,7 @@ services:
   server:
     build:
       context: .
+    platform: linux/x86_64
     ports:
       - 8080:8080
 
