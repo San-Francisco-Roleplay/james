@@ -5,12 +5,12 @@ on:
       branches: [ "main" ]
 
 env:
-  IMAGE_NAME: ${{ env.IMAGE_NAME }}
-  PROJECT_ID: ${{ env.PROJECT_ID }}
-  AR_REPO_LOCATION: ${{ var.AR_REPO_LOCATION }}
-  AR_URL: ${{ env.AR_URL }}
-  SERVICE_ACCOUNT: ${{ env.SERVICE_ACCOUNT }}
-  WORKLOAD_IDENTITY_PROVIDER: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+  IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+  PROJECT_ID: ${{ secrets.PROJECT_ID }}
+  AR_REPO_LOCATION: ${{ secrets.AR_REPO_LOCATION }}
+  AR_URL: ${{ secrets.AR_URL }}
+  SERVICE_ACCOUNT: ${{ secrets.SERVICE_ACCOUNT }}
+  WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
 
 jobs:
   push_to_ar:
