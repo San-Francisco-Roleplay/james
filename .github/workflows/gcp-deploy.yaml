@@ -45,5 +45,5 @@ jobs:
 
       - name: Build and Push Container
         run: |-
-          docker build --platform linux/x86_64 --build-arg ENV_FILE=.env -t "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" ./
+          docker build --platform linux/x86_64 --build-arg ENV_FILE=.env -t "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" -t "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:latest" ./
           docker push "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
