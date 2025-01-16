@@ -6,6 +6,8 @@ import com.computiotion.sfrp.bot.config.CommandConfig;
 import com.computiotion.sfrp.bot.config.Config;
 import com.computiotion.sfrp.bot.config.ConfigReader;
 import com.computiotion.sfrp.bot.templates.InternalError;
+import io.sentry.Sentry;
+import io.sentry.protocol.SentryId;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -50,11 +52,10 @@ public class MessageListener extends ListenerAdapter {
         log.trace("Executing from message");
         try {
             Command.executeFromMessage(message, content);
-        } catch (RuntimeException e) {
-            message.replyEmbeds(new InternalError().makeEmbed().build()).queue();
-            throw new RuntimeException(e);
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new RuntimeException(e);
+        } catch (RuntimeException | ParserConfigurationException | IOException | SAXException e) {
+            SentryId id = Sentry.captureException(e);
+
+            message.replyEmbeds(new InternalError(id.toString(), false).makeEmbed().build()).queue();
         }
         message.removeReaction(Emoji.Loading.toJda()).complete();
         log.trace("Finished executing from message");

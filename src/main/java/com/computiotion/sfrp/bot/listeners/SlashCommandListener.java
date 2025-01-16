@@ -2,6 +2,8 @@ package com.computiotion.sfrp.bot.listeners;
 
 import com.computiotion.sfrp.bot.commands.Command;
 import com.computiotion.sfrp.bot.templates.InternalError;
+import io.sentry.Sentry;
+import io.sentry.protocol.SentryId;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.apache.commons.logging.Log;
@@ -23,7 +25,9 @@ public class SlashCommandListener extends ListenerAdapter {
         try {
             Command.executeFromSlash(event);
         } catch (RuntimeException | ParserConfigurationException | IOException | SAXException e) {
-            event.replyEmbeds(new InternalError().makeEmbed().build())
+            SentryId id = Sentry.captureException(e);
+
+            event.replyEmbeds(new InternalError(id.toString(), true).makeEmbed().build())
                     .setEphemeral(true)
                     .queue();
             throw new RuntimeException(e);
