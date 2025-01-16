@@ -1,8 +1,8 @@
 name: Push to Artifact Registry
 
 on:
-    push:
-      branches: [ "main" ]
+  push:
+    branches: [ "main" ]
 
 env:
   IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
@@ -40,7 +40,10 @@ jobs:
           password: '${{ steps.auth.outputs.access_token }}'
           registry: '${{ env.AR_REPO_LOCATION }}-docker.pkg.dev'
 
+      - name: Set up .env file
+        run: echo "${{ secrets.DOCKER_ENV_FILE }}" > .env
+
       - name: Build and Push Container
         run: |-
-          docker build --platform linux/x86_64 -t "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" ./
+          docker build --platform linux/x86_64 --build-arg ENV_FILE=.env -t "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" ./
           docker push "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
