@@ -11,10 +11,10 @@ services:
   server:
     build:
       context: .
-      args:
-        - SENTRY_AUTH=${SENTRY_AUTH_TOKEN}
-        - SENTRY_ORG=${SENTRY_ORG}
-        - SENTRY_PROJECT=${SENTRY_PROJECT}
+      secrets:
+        - sentry_auth
+        - sentry_org
+        - sentry_project
     platform: linux/x86_64
     ports:
       - 8080:8080

@@ -1,26 +1,13 @@
 # syntax=docker/dockerfile:1
 
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/go/dockerfile-reference/
-
-# Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
-
-################################################################################
-
-# Create a stage for resolving and downloading dependencies.
-FROM eclipse-temurin:21-jdk-jammy as deps
+FROM eclipse-temurin:21-jdk-jammy AS deps
 
 WORKDIR /build
 
-# Copy the mvnw wrapper with executable permissions.
 COPY --chmod=0755 mvnw mvnw
 COPY .mvn/ .mvn/
 COPY mvnw mvnw.cmd ./
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.m2 so that subsequent builds don't have to
-# re-download packages.
 RUN --mount=type=bind,source=pom.xml,target=pom.xml \
     --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline -DskipTests
 
@@ -32,32 +19,28 @@ RUN --mount=type=bind,source=pom.xml,target=pom.xml \
 # jar and instead relies on an application server like Apache Tomcat, you'll need to update this
 # stage with the correct filename of your package and update the base image of the "final" stage
 # use the relevant app server, e.g., using tomcat (https://hub.docker.com/_/tomcat/) as a base image.
-FROM deps as package
+FROM deps AS package
 
 WORKDIR /build
 
-ARG SENTRY_AUTH
-ARG SENTRY_ORG
-ARG SENTRY_PROJECT
-
-ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH
-ENV SENTRY_ORG=$SENTRY_ORG
-ENV SENTRY_PROJECT=$SENTRY_PROJECT
-
 COPY ./src src/
-RUN --mount=type=bind,source=pom.xml,target=pom.xml \
-    --mount=type=cache,target=/root/.m2 \
-    ./mvnw package -DskipTests && \
-    mv target/$(./mvnw help:evaluate -Dexpression=project.artifactId -q -DforceStdout)-$(./mvnw -DSENTRY_AUTH_TOKEN=$SENTRY_AUTH -DSENTRY_PROJECT=$SENTRY_PROJECT -DSENTRY_ORG=$SENTRY_ORG help:evaluate -Dexpression=project.version -q -DforceStdout).jar target/app.jar
+COPY pom.xml pom.xml
 
-################################################################################
+RUN --mount=type=secret,id=sentry_auth,env=SENTRY_AUTH_TOKEN \
+    --mount=type=secret,id=sentry_org,env=SENTRY_ORG \
+    --mount=type=secret,id=sentry_project,env=SENTRY_PROJECT \
+    --mount=type=cache,target=/root/.m2 \
+    ./mvnw -DSENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN -DSENTRY_PROJECT=$SENTRY_PROJECT -DSENTRY_ORG=$SENTRY_ORG package -DskipTests
+
+# Ensure the target directory exists before moving the file
+RUN mkdir -p /build/target
 
 # Create a stage for extracting the application into separate layers.
 # Take advantage of Spring Boot's layer tools and Docker's caching by extracting
 # the packaged application into separate layers that can be copied into the final stage.
 # See Spring's docs for reference:
 # https://docs.spring.io/spring-boot/docs/current/reference/html/container-images.html
-FROM package as extract
+FROM package AS extract
 
 WORKDIR /build
 
