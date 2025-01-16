@@ -33,6 +33,7 @@ public class BotApplication {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, ParserConfigurationException, SAXException {
         SpringApplication.run(BotApplication.class, args);
+        ConfigManager.initSentry();
 
         log.debug("Finding command classes.");
         ClassTools.getSubclassesOf("com.computiotion.sfrp.bot", Command.class).forEach(command -> {

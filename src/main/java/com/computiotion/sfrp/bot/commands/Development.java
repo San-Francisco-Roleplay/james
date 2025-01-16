@@ -51,6 +51,11 @@ public class Development extends Command {
         }
     }
 
+    @CommandExecutor(value = "error", level = PermissionLevel.Enabled)
+    public void error(@NotNull CommandInteraction interaction) {
+        throw new IllegalArgumentException("This is a test exception caused by someone running dev error");
+    }
+
     @CommandExecutor(value = "perm-enabled", level = PermissionLevel.Enabled)
     public void permEnabled(@NotNull CommandInteraction interaction) {
         perm(interaction);
