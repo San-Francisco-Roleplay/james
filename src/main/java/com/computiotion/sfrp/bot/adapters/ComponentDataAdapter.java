@@ -2,12 +2,11 @@ package com.computiotion.sfrp.bot.adapters;
 
 import com.computiotion.sfrp.bot.components.ComponentData;
 import com.computiotion.sfrp.bot.components.ComponentManager;
-import com.computiotion.sfrp.bot.components.ComponentReference;
+import com.computiotion.sfrp.bot.Reference;
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -23,7 +22,7 @@ public class ComponentDataAdapter extends TypeAdapter<ComponentData> {
         JsonObject elem = (JsonObject) gson.toJsonTree(value);
         Class<? extends ComponentData> cls = value.getClass();
 
-        ComponentReference ref = cls.getAnnotation(ComponentReference.class);
+        Reference ref = cls.getAnnotation(Reference.class);
         elem.addProperty(TYPE_PROPERTY_NAME, ref.value());
 
         gson.toJson(elem, writer);

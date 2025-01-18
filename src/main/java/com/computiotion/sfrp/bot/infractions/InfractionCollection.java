@@ -10,15 +10,14 @@ import java.util.List;
 import java.util.Set;
 
 import static com.computiotion.sfrp.bot.ConfigManager.REDIS_PREFIX_INFRACTION_COLLECTION;
-import static com.computiotion.sfrp.bot.ConfigManager.REDIS_PREFIX_INFRACTION_HISTORY;
 
 public class InfractionCollection implements DatabaseSaveable {
     private static final Jedis jedis = Generators.getJedis();
     private static final Gson gson = Generators.getGson();
 
-    private List<String> userId;
+    private List<String> issuers;
     private transient String id;
-    private Set<Infraction> infractions;
+    private Set<CollectedInfraction> infractions;
     private Instant at;
 
     public static InfractionCollection getCollection(String id) {
@@ -30,6 +29,6 @@ public class InfractionCollection implements DatabaseSaveable {
 
     @Override
     public void save() {
-        jedis.set(REDIS_PREFIX_INFRACTION_COLLECTION + userId, gson.toJson(this));
+        jedis.set(REDIS_PREFIX_INFRACTION_COLLECTION + id, gson.toJson(this));
     }
 }

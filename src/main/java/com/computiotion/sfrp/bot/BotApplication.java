@@ -1,13 +1,15 @@
 package com.computiotion.sfrp.bot;
 
 import com.computiotion.sfrp.bot.commands.Command;
+import com.computiotion.sfrp.bot.commands.Infract;
+import com.computiotion.sfrp.bot.components.ComponentManager;
 import com.computiotion.sfrp.bot.config.ConfigReader;
 import com.computiotion.sfrp.bot.config.erlc.ERLCConfig;
 import com.computiotion.sfrp.bot.erlc.MessagesCron;
-import com.computiotion.sfrp.bot.listeners.CommandLogListener;
-import com.computiotion.sfrp.bot.listeners.GuildReadyListener;
-import com.computiotion.sfrp.bot.listeners.MessageListener;
-import com.computiotion.sfrp.bot.listeners.SlashCommandListener;
+import com.computiotion.sfrp.bot.infractions.InfractionComponent;
+import com.computiotion.sfrp.bot.infractions.InfractionReference;
+import com.computiotion.sfrp.bot.listeners.*;
+import com.computiotion.sfrp.bot.reference.ReferenceManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
@@ -33,6 +35,8 @@ public class BotApplication {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, ParserConfigurationException, SAXException {
         SpringApplication.run(BotApplication.class, args);
+        ComponentManager.registerType(InfractionComponent.class);
+        ReferenceManager.registerClass(Infract.class);
 
         log.debug("Finding command classes.");
         ClassTools.getSubclassesOf("com.computiotion.sfrp.bot", Command.class).forEach(command -> {
@@ -58,7 +62,7 @@ public class BotApplication {
         log.debug("Finished searching commands.");
 
         jda = JDABuilder.create(ConfigManager.getBotToken(), EnumSet.of(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MEMBERS))
-                .addEventListeners(new MessageListener(), new SlashCommandListener(), new GuildReadyListener(), new CommandLogListener())
+                .addEventListeners(new MessageListener(), new SlashCommandListener(), new GuildReadyListener(), new CommandLogListener(), new ReferenceListener())
                 .build();
 
         String name = jda.getSelfUser().getName();

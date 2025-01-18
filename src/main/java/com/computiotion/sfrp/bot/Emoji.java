@@ -22,7 +22,9 @@ public enum Emoji {
     InfractTermination("<:InfractTermination:1327762485440155688>"),
     ContentBullet("<:ContentBullet:1325277820896935988>"),
     ContentPing("<:ContentMention:1325277824315297894>"),
-    ContentInfo("<:ContentInfo:1325277821983129630>");
+    ContentInfo("<:ContentInfo:1325277821983129630>"),
+    SignOff("<:SignOff:1330012047177551902>"),
+    PlusOne("<:PlusOne:1330012048645685319>");
 
     private final String name;
     private final String id;

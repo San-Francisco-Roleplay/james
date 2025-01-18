@@ -599,13 +599,13 @@ public abstract class Command {
                 net.dv8tion.jda.api.entities.User user = message.getGuild().getMembers().stream()
                         .map(Member::getUser)
                         .filter(mem -> {
-                            log.info("Checking: " + finalArg);
+                            log.debug("Checking: " + finalArg);
 
                             String mention = mem.getAsMention();
                             String id = mem.getId();
                             String name = mem.getName();
 
-                            log.info("Against " + mention + ", " + id + ", " + name);
+                            log.debug("Against " + mention + ", " + id + ", " + name);
 
                             if (finalArg.equalsIgnoreCase(mention)) return true;
                             if (finalArg.equalsIgnoreCase(id)) return true;

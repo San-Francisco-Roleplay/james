@@ -2,18 +2,21 @@ package com.computiotion.sfrp.bot.commands;
 
 import com.computiotion.sfrp.bot.Colors;
 import com.computiotion.sfrp.bot.ConfigManager;
+import com.computiotion.sfrp.bot.Emoji;
 import com.computiotion.sfrp.bot.config.Config;
 import com.computiotion.sfrp.bot.config.ConfigReader;
 import com.computiotion.sfrp.bot.config.StaffConfig;
 import com.computiotion.sfrp.bot.config.StaffPermission;
-import com.computiotion.sfrp.bot.infractions.Infraction;
-import com.computiotion.sfrp.bot.infractions.InfractionCollection;
-import com.computiotion.sfrp.bot.infractions.InfractionHistory;
-import com.computiotion.sfrp.bot.infractions.InfractionType;
+import com.computiotion.sfrp.bot.infractions.*;
+import com.computiotion.sfrp.bot.reference.ReferenceData;
+import com.computiotion.sfrp.bot.reference.ReferenceDataImpl;
+import com.computiotion.sfrp.bot.reference.ReferenceHandler;
+import com.computiotion.sfrp.bot.reference.ReferenceManager;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -36,18 +39,14 @@ public class Infract extends Command {
             throw new RuntimeException(e);
         }
     }
+    private final static StaffConfig staff = config.getStaff();
 
     @CommandExecutor(value = "status", level = PermissionLevel.Staff, description = "Checks your current infractions.")
     public void status(@NotNull CommandInteraction interaction) {
 
     }
 
-    @CommandExecutor(value = "history", level = PermissionLevel.HighRank, description = "Checks a staff member's infraction history.")
-    public void history(@NotNull CommandInteraction interaction,
-                        @User(value = "member", description = "The staff member to check", required = false) net.dv8tion.jda.api.entities.User user) {
-        log.trace("Executing history.");
-        StaffConfig staff = config.getStaff();
-
+    public Member verifyStaff(@NotNull CommandInteraction interaction, net.dv8tion.jda.api.entities.User user) {
         net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction slash = null;
         Message message = null;
 
@@ -87,7 +86,7 @@ public class Infract extends Command {
                         .complete();
             }
 
-            return;
+            return null;
         }
 
         List<Role> roles = member.getRoles();
@@ -111,8 +110,30 @@ public class Infract extends Command {
                         .complete();
             }
 
-            return;
+            return null;
         }
+
+        return member;
+    }
+
+    @CommandExecutor(value = "history", level = PermissionLevel.HighRank, description = "Checks a staff member's infraction history.")
+    public void history(@NotNull CommandInteraction interaction,
+                        @User(value = "member", description = "The staff member to check", required = false) net.dv8tion.jda.api.entities.User user) {
+        net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction slash = null;
+        Message message = null;
+
+        CommandInteractionType type = interaction.getType();
+
+        if (interaction instanceof MessageCommandInteraction msg) {
+            message = msg.getMessage();
+        }
+
+        if (interaction instanceof SlashCommandInteraction dev) {
+            slash = dev.getInteraction();
+        }
+
+        Member member = verifyStaff(interaction, user);
+        if (member == null) return;
 
         String memberId = member.getId();
         InfractionHistory history = InfractionHistory.fromUserId(memberId);
@@ -139,47 +160,73 @@ public class Infract extends Command {
         }
     }
 
-    @CommandExecutor(value = "warn", level = PermissionLevel.HighRank, description = "Warns a staff member.")
-    public void warn(@NotNull CommandInteraction interaction) {
-        InfractionType type = InfractionType.Warning;
+    @ReferenceHandler("infract_queue")
+    public void infractRef(ReferenceData data, String message) {
+        log.trace("Reference triggered: " + message);
     }
 
-    @CommandExecutor(value = "strike", level = PermissionLevel.HighRank, description = "Strikes a staff member.")
-    public void strike(@NotNull CommandInteraction interaction) {
-        InfractionType type = InfractionType.Strike;
+    @CommandExecutor(value = "member", level = PermissionLevel.HighRank, description = "Infracts a staff member.")
+    public void infract(@NotNull CommandInteraction interaction, @User(value = "member", description = "The staff member to infract.") net.dv8tion.jda.api.entities.User user,
+                        @Text(value = "reason", description = "The reason for the infraction.") String reason) {
+        net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction slash = null;
+        Message message = null;
 
-    }
+        CommandInteractionType type = interaction.getType();
 
-    @CommandExecutor(value = "suspend", level = PermissionLevel.HighRank, description = "Suspends the staff member.")
-    public void suspend(@NotNull CommandInteraction interaction) {
-        InfractionType type = InfractionType.Suspend;
+        if (interaction instanceof MessageCommandInteraction msg) {
+            message = msg.getMessage();
+        }
 
-    }
+        if (interaction instanceof SlashCommandInteraction dev) {
+            slash = dev.getInteraction();
+        }
 
-    @CommandExecutor(value = "trial", level = PermissionLevel.HighRank, description = "Puts the staff member on trial.")
-    public void trial(@NotNull CommandInteraction interaction) {
-        InfractionType type = InfractionType.Trial;
+        Member member = verifyStaff(interaction, user);
+        if (member == null) return;
 
-    }
+        if (interaction.getUser().getId().equals(member.getId())) {
+            MessageEmbed embed = new EmbedBuilder()
+                    .setColor(Colors.Red.getColor())
+                    .setTitle("Invalid Argument")
+                    .setDescription("The provided user may not be yourself.")
+                    .build();
 
-    @CommandExecutor(value = "leave", level = PermissionLevel.HighRank, description = "Puts the staff member on administrative leave.")
-    public void leave(@NotNull CommandInteraction interaction) {
-        InfractionType type = InfractionType.AdminLeave;
+            if (interaction.getType() == CommandInteractionType.SLASH) {
+                assert slash != null;
+                slash.replyEmbeds(embed)
+                        .complete();
+                return;
+            } else {
+                assert message != null;
+                message.replyEmbeds(embed)
+                        .complete();
+                return;
+            }
+        }
 
-    }
+        QueuedInfraction infraction = QueuedInfraction.createInfraction(member.getGuild().getId(), interaction.getUser().getId());
+        infraction.addTargets(user.getId());
+        infraction.setReason(reason);
 
-    @CommandExecutor(value = "demotion", level = PermissionLevel.HighRank, description = "Demotes the staff member.")
-    public void demotion(@NotNull CommandInteraction interaction) {
-        InfractionType type = InfractionType.Demotion;
-    }
+        EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+        if (queuedMessage == null) return;
+        Message res;
 
-    @CommandExecutor(value = "blacklist", level = PermissionLevel.HighRank, description = "Terminates a staff member and blacklists the staff.")
-    public void blacklist(@NotNull CommandInteraction interaction) {
-        InfractionType type = InfractionType.Blacklist;
-    }
+        if (interaction.getType() == CommandInteractionType.SLASH) {
+            assert slash != null;
+            InteractionHook hook = slash.replyEmbeds(queuedMessage.build())
+                    .complete();
+            res = hook.retrieveOriginal().complete();
+        } else {
+            assert message != null;
+            res = message.replyEmbeds(queuedMessage.build())
+                    .complete();
+        }
 
-    @CommandExecutor(value = "term", level = PermissionLevel.HighRank, description = "Terminates a staff member.")
-    public void terminate(@NotNull CommandInteraction interaction) {
-        InfractionType type = InfractionType.Termination;
+        ReferenceManager.registerData(new ReferenceDataImpl("infract_queue", res.getId(), new InfractionReference(infraction.getId())));
+
+        res.addReaction(Emoji.SignOff.toJda())
+                .and(res.addReaction(Emoji.PlusOne.toJda()))
+                .complete();
     }
 }
