@@ -7,6 +7,8 @@ import com.computiotion.sfrp.bot.reference.ReferenceManager;
 import com.computiotion.sfrp.bot.templates.InternalError;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,29 +24,43 @@ public class ReferenceListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
-        String messageId = event.getMessageId();
-
         Message message = event.getMessage();
         Message reply = event.getMessage().getReferencedMessage();
 
-        if (reply == null) return;
+        if (reply == null) {
+            log.trace("No reply, returning.");
+            return;
+        }
 
+        log.trace("Fetching data.");
         ReferenceData data = ReferenceManager.getData(reply.getId());
-        if (data == null) return;
+        log.trace("Data received.");
+        if (data == null) {
+            log.trace("Data is null.");
+            return;
+        }
 
         String content = message.getContentRaw();
 
-        if (content.startsWith(";")) return;
+        if (content.startsWith(";")) {
+            log.trace("Starts with ;, returning");
+            return;
+        }
+
 
         message.addReaction(Emoji.Loading.toJda())
                 .complete();
 
         log.trace("Executing from message");
         try {
-            data.execute(content);
+            data.execute(reply, message);
             message.delete().queue();
-        } catch (RuntimeException | InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+        } catch (RuntimeException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
             log.error(e);
+            message.replyEmbeds(new InternalError().makeEmbed().build()).queue();
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            log.error(e.getTargetException());
             message.replyEmbeds(new InternalError().makeEmbed().build()).queue();
             throw new RuntimeException(e);
         }

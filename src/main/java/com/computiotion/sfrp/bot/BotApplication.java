@@ -37,6 +37,7 @@ public class BotApplication {
         SpringApplication.run(BotApplication.class, args);
         ComponentManager.registerType(InfractionComponent.class);
         ReferenceManager.registerClass(Infract.class);
+        ReferenceManager.registerType(InfractionReference.class);
 
         log.debug("Finding command classes.");
         ClassTools.getSubclassesOf("com.computiotion.sfrp.bot", Command.class).forEach(command -> {

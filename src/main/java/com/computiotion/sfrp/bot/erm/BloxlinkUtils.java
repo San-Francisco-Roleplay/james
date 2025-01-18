@@ -2,6 +2,8 @@ package com.computiotion.sfrp.bot.erm;
 
 import com.computiotion.sfrp.bot.ConfigManager;
 import com.computiotion.sfrp.bot.Hooks;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import kong.unirest.HttpResponse;
@@ -15,12 +17,12 @@ import java.util.List;
 
 public class BloxlinkUtils {
     private static final Log log = LogFactory.getLog(BloxlinkUtils.class);
-    private static final HashMap<String, String> discordToRoblox = new HashMap<>();
-    private static final HashMap<String, String> robloxToDiscord = new HashMap<>();
+    // left is discord, right is roblox
+    private static final BiMap<String, String> ids = HashBiMap.create();
 
 
     public static @Nullable String fromDiscord(String guild, String discordId) {
-        if (discordToRoblox.containsKey(discordId)) return discordToRoblox.get(discordId);
+        if (ids.containsKey(discordId)) return ids.get(discordId);
 
         String url = String.format("https://api.blox.link/v4/public/guilds/%s/discord-to-roblox/%s", guild, discordId);
 
@@ -35,14 +37,13 @@ public class BloxlinkUtils {
         assert body != null;
         String robloxID = body.get("robloxID").getAsString();
 
-        discordToRoblox.put(discordId, robloxID);
-        robloxToDiscord.put(robloxID, discordId);
+        ids.put(discordId, robloxID);
 
         return robloxID;
     }
 
     public static @Nullable String fromRoblox(String guild, String robloxId) {
-        if (robloxToDiscord.containsKey(robloxId)) return robloxToDiscord.get(robloxId);
+        if (ids.inverse().containsKey(robloxId)) return ids.inverse().get(robloxId);
 
         String url = String.format("https://api.blox.link/v4/public/guilds/%s/roblox-to-discord/%s", guild, robloxId);
 
@@ -60,8 +61,7 @@ public class BloxlinkUtils {
 
         String discordId = discordIDs.getFirst().getAsString();
 
-        discordToRoblox.put(discordId, robloxId);
-        robloxToDiscord.put(robloxId, discordId);
+        ids.put(robloxId, discordId);
 
         return discordId;
     }

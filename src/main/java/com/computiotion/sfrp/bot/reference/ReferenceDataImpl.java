@@ -2,6 +2,7 @@ package com.computiotion.sfrp.bot.reference;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.annotations.SerializedName;
+import net.dv8tion.jda.api.entities.Message;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -57,7 +58,7 @@ public class ReferenceDataImpl implements ReferenceData {
     }
 
     @Override
-    public void execute(String message) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public void execute(Message repliedTo, Message message) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         log.debug("Executing " + getForwardTo());
         Method method = forwardTo();
         method.setAccessible(true);
@@ -65,6 +66,12 @@ public class ReferenceDataImpl implements ReferenceData {
         Constructor<?> constructor = method.getDeclaringClass().getConstructor();
         constructor.setAccessible(true);
 
-        method.invoke(constructor.newInstance(), this, message);
+        boolean isString = method.getParameters()[1].getType() == String.class;
+
+        if (method.getParameterCount() == 3) {
+            method.invoke(constructor.newInstance(), this, isString ? message.getContentRaw() : message, repliedTo);
+            return;
+        }
+        method.invoke(constructor.newInstance(), this, isString ? message.getContentRaw() : message);
     }
 }

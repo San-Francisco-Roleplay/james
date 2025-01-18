@@ -8,14 +8,12 @@ import com.computiotion.sfrp.bot.config.ConfigReader;
 import com.computiotion.sfrp.bot.config.StaffConfig;
 import com.computiotion.sfrp.bot.config.StaffPermission;
 import com.computiotion.sfrp.bot.infractions.*;
-import com.computiotion.sfrp.bot.reference.ReferenceData;
-import com.computiotion.sfrp.bot.reference.ReferenceDataImpl;
-import com.computiotion.sfrp.bot.reference.ReferenceHandler;
-import com.computiotion.sfrp.bot.reference.ReferenceManager;
+import com.computiotion.sfrp.bot.reference.*;
+import com.google.common.collect.HashBiMap;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,22 +22,23 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @CommandController(value = "infract", description = "Utilities relating to infractions.")
 public class Infract extends Command {
     private final static Config config;
+    private final static StaffConfig staff;
     private static final Log log = LogFactory.getLog(Infract.class);
 
     static {
         try {
             config = ConfigReader.fromApplicationDefaults();
+            staff = config.getStaff();
         } catch (ParserConfigurationException | IOException | SAXException e) {
             throw new RuntimeException(e);
         }
     }
-    private final static StaffConfig staff = config.getStaff();
+
 
     @CommandExecutor(value = "status", level = PermissionLevel.Staff, description = "Checks your current infractions.")
     public void status(@NotNull CommandInteraction interaction) {
@@ -96,7 +95,7 @@ public class Infract extends Command {
             MessageEmbed embed = new EmbedBuilder()
                     .setColor(Colors.Red.getColor())
                     .setTitle("User must be Staff")
-                    .setDescription("The provided user does not have the <@&" + staff.getRoles().get(StaffPermission.Staff) +"> (staff) role.\n> If you're a server administrator, make sure the `config.Staff.roles.Staff` property is set.")
+                    .setDescription("The provided user does not have the <@&" + staff.getRoles().get(StaffPermission.Staff) + "> (staff) role.\n> If you're a server administrator, make sure the `config.Staff.roles.Staff` property is set.")
                     .build();
 
             if (interaction.getType() == CommandInteractionType.SLASH) {
@@ -161,8 +160,158 @@ public class Infract extends Command {
     }
 
     @ReferenceHandler("infract_queue")
-    public void infractRef(ReferenceData data, String message) {
-        log.trace("Reference triggered: " + message);
+    public void infractRef(ReferenceData data, Message message, Message repliedTo) {
+        String content = message.getContentRaw();
+        ReferencePayload payload = data.getPayload();
+        if (!(payload instanceof InfractionReference ref)) return;
+
+        String queueId = ref.getQueueId();
+        QueuedInfraction infraction = QueuedInfraction.getCollection(queueId);
+        if (infraction == null) {
+            repliedTo.delete().queue();
+            return;
+        }
+
+        net.dv8tion.jda.api.entities.User author = message.getAuthor();
+        if (!author.getId().equals(infraction.getLeader())) {
+            author.openPrivateChannel()
+                    .flatMap(channel -> channel.sendMessageEmbeds(new EmbedBuilder()
+                            .setColor(Colors.Red.getColor())
+                            .setTitle("Not Permitted")
+                            .setDescription("You are not permitted to preform this action.")
+                            .build()))
+                    .queue();
+        }
+
+
+        if (Objects.equals(content, "delete this infraction")) {
+            infraction.delete();
+            ReferenceManager.removeData(data);
+
+            repliedTo.editMessageEmbeds(new EmbedBuilder()
+                            .setColor(Colors.Red.getColor())
+                            .setTitle("Infraction Deleted")
+                            .setDescription("This infraction was successfully deleted.")
+                            .addField("Infraction Details", "> ID: `" + infraction.getId() + "`", false)
+                            .build())
+                    .setReplace(true)
+                    .queue();
+            return;
+        }
+
+        if (content.startsWith("reason")) {
+            log.trace("Setting reason " + content);
+
+            String[] split = content.split(" ", 2);
+            if (split.length != 2 || split[1].trim().isEmpty()) {
+                EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                if (queuedMessage == null) return;
+
+                repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** A reason must be provided. For more information, review the [documentation](https://docs.sfrp.computiotion.com/ref/ia/infract).")
+                        .build()).queue();
+                return;
+            }
+
+            infraction.setReason(split[1]);
+            EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+            if (queuedMessage == null) return;
+            repliedTo.editMessageEmbeds(queuedMessage.build())
+                    .queue();
+            return;
+        }
+
+        if (content.startsWith("add") || content.startsWith("sub")) {
+            String[] split = content.split(" ");
+
+            if (split.length == 1) {
+                EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                if (queuedMessage == null) return;
+
+                repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** A user must be provided. For more information, review the [documentation](https://docs.sfrp.computiotion.com/ref/ia/infract).")
+                        .build()).queue();
+                return;
+            }
+
+            List<Member> members = new ArrayList<>();
+
+            List<String> args = new ArrayList<>(Arrays.asList(split));
+            args.removeFirst();
+
+            for (String arg : args) {
+                Member member = message.getGuild().getMembers()
+                        .stream().filter(user -> {
+                            String mention = user.getAsMention();
+                            String id = user.getId();
+                            String name = user.getUser().getName();
+
+                            return mention.equalsIgnoreCase(arg) || id.equalsIgnoreCase(arg) || name.equalsIgnoreCase(arg);
+                        })
+                        .findFirst()
+                        .orElse(null);
+
+                EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                if (queuedMessage == null) return;
+
+                if (member == null) {
+                    repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** No user was found for argument " + arg)
+                                    .build())
+                            .queue();
+                    return;
+                }
+
+                HashBiMap<StaffPermission, String> perms = HashBiMap.create(staff.getRoles());
+
+                List<StaffPermission> userRoles = Objects.requireNonNull(message.getMember()).getRoles()
+                        .stream().filter(role -> staff.getRoles().containsValue(role.getId()))
+                        .map(role -> perms.inverse().get(role.getId()))
+                        .sorted(Comparator.comparingInt(Enum::ordinal))
+                        .toList();
+
+                List<StaffPermission> targetRoles = Objects.requireNonNull(member).getRoles()
+                        .stream().filter(role -> staff.getRoles().containsValue(role.getId()))
+                        .map(role -> perms.inverse().get(role.getId()))
+                        .sorted(Comparator.comparingInt(Enum::ordinal))
+                        .toList();
+
+                if (!targetRoles.contains(StaffPermission.Staff)) {
+                    repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** User " + member.getAsMention() + " is not staff.")
+                                    .build())
+                            .queue();
+                    return;
+                }
+
+
+                if (targetRoles.getLast().ordinal() >= userRoles.getLast().ordinal()) {
+                    repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** User " + member.getAsMention() + " is a higher rank than you (or the same rank as you).")
+                                    .build())
+                            .queue();
+                    return;
+                }
+
+                members.add(member);
+            }
+
+            boolean adding = Objects.equals(split[0], "add");
+            if (adding) {
+                infraction.addTargets(members.stream().map(ISnowflake::getId).toArray(String[]::new));
+            } else {
+                infraction.removeTargets(members.stream().map(ISnowflake::getId).toArray(String[]::new));
+            }
+
+            EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+            if (queuedMessage == null) return;
+
+            repliedTo.editMessageEmbeds(queuedMessage.build())
+                    .queue();
+
+            return;
+        }
+
+        EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+        if (queuedMessage == null) return;
+
+        repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Unknown command `" + content + "` For more information, review the [documentation](https://docs.sfrp.computiotion.com/ref/ia/infract).")
+                .build()).queue();
     }
 
     @CommandExecutor(value = "member", level = PermissionLevel.HighRank, description = "Infracts a staff member.")
@@ -224,9 +373,5 @@ public class Infract extends Command {
         }
 
         ReferenceManager.registerData(new ReferenceDataImpl("infract_queue", res.getId(), new InfractionReference(infraction.getId())));
-
-        res.addReaction(Emoji.SignOff.toJda())
-                .and(res.addReaction(Emoji.PlusOne.toJda()))
-                .complete();
     }
 }

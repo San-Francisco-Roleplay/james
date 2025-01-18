@@ -20,9 +20,10 @@ public class QueuedInfraction implements DatabaseSaveable {
     private static final Jedis jedis = Generators.getJedis();
     private static final Gson gson = Generators.getGson();
 
-    private List<String> issuers = new ArrayList<>();
-    private List<String> signedBy = new ArrayList<>();
-    private final List<String> targets = new ArrayList<>();
+    private String leader;
+    private SortedSet<String> issuers = new TreeSet<>();
+    private SortedSet<String> signedBy = new TreeSet<>();
+    private final SortedSet<String> targets = new TreeSet<>();
     private transient String id;
     @SerializedName("guild_id")
     private String guildId;
@@ -51,10 +52,12 @@ public class QueuedInfraction implements DatabaseSaveable {
 
     public static @NotNull QueuedInfraction createInfraction(String guildId, @NotNull List<String> issuer, @NotNull List<Infraction> infractions) {
         QueuedInfraction infraction = new QueuedInfraction(snowflake.nextId());
-        infraction.issuers = issuer.stream().filter(Objects::nonNull).toList();
-        infraction.signedBy = new ArrayList<>(infraction.issuers);
+        infraction.issuers = new TreeSet<>(issuer.stream().filter(Objects::nonNull).toList());
+        infraction.signedBy = new TreeSet<>(infraction.issuers);
         infraction.infractions = infractions.stream().filter(Objects::nonNull).toList();
         infraction.guildId = guildId;
+        infraction.leader = infraction.issuers.getFirst();
+        infraction.save();
 
         return infraction;
     }
@@ -78,8 +81,14 @@ public class QueuedInfraction implements DatabaseSaveable {
         if (targets.length > 0) save();
     }
 
-    public List<String> getTargets() {
-        return Collections.unmodifiableList(targets);
+    public void removeTargets(String... targets) {
+        Arrays.stream(targets).toList().forEach(this.targets::remove);
+
+        if (targets.length > 0) save();
+    }
+
+    public SortedSet<String> getTargets() {
+        return Collections.unmodifiableSortedSet(targets);
     }
 
     public void addIssuers(String... issuers) {
@@ -88,8 +97,8 @@ public class QueuedInfraction implements DatabaseSaveable {
         if (issuers.length > 0) save();
     }
 
-    public List<String> getIssuers() {
-        return Collections.unmodifiableList(issuers);
+    public SortedSet<String> getIssuers() {
+        return Collections.unmodifiableSortedSet(issuers);
     }
 
     public void addSignage(String... issuers) {
@@ -99,8 +108,8 @@ public class QueuedInfraction implements DatabaseSaveable {
         if (issuers.length > 0) save();
     }
 
-    public List<String> getSignedBy() {
-        return Collections.unmodifiableList(signedBy);
+    public SortedSet<String> getSignedBy() {
+        return Collections.unmodifiableSortedSet(signedBy);
     }
 
     @Override
@@ -128,5 +137,9 @@ public class QueuedInfraction implements DatabaseSaveable {
 
     public List<Infraction> getPunishments() {
         return infractions;
+    }
+
+    public String getLeader() {
+        return leader;
     }
 }

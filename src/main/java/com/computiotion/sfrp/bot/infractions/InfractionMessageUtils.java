@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.format.datetime.standard.DurationFormatterUtils;
 
 import java.util.List;
+import java.util.SortedSet;
 import java.util.stream.Collectors;
 
 import static org.springframework.format.annotation.DurationFormat.Style.SIMPLE;
@@ -22,9 +23,9 @@ public class InfractionMessageUtils {
     public static EmbedBuilder createQueuedMessage(QueuedInfraction infraction) {
         if (jda == null) jda = BotApplication.getJda();
 
-        List<String> targetIds = infraction.getTargets();
-        List<String> issuerIds = infraction.getSignedBy();
-        List<String> signedByIds = infraction.getIssuers();
+        SortedSet<String> targetIds = infraction.getTargets();
+        SortedSet<String> issuerIds = infraction.getSignedBy();
+        SortedSet<String> signedByIds = infraction.getIssuers();
         Guild guild = jda.getGuildById(infraction.getGuildId());
 
         if (guild == null) {

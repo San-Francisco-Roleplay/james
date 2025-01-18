@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Reference {
     /**
-     * @return A token for identifying this reference.
+     * @return A key for identifying this reference.
      */
     String value();
 }
