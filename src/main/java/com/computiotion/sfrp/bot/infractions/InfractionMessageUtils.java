@@ -2,13 +2,13 @@ package com.computiotion.sfrp.bot.infractions;
 
 import com.computiotion.sfrp.bot.BotApplication;
 import com.computiotion.sfrp.bot.Colors;
+import com.computiotion.sfrp.bot.time.TimeParser;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.format.datetime.standard.DurationFormatterUtils;
 
 import java.util.List;
 import java.util.SortedSet;
@@ -53,15 +53,15 @@ public class InfractionMessageUtils {
                     return switch (type) {
                         case Warning, Strike -> {
                             QuantitativeInfraction inf = (QuantitativeInfraction) item;
-                            yield inf.getCount() + " " + type.getDisplay();
+                            yield inf.getCount() + " " + type.getDisplay() + ((inf.getCount() != 1) ? "s" : "");
                         }
                         case Suspend -> {
                             TimeableInfraction inf = (TimeableInfraction) item;
-                            yield DurationFormatterUtils.print(inf.getDuration(), SIMPLE) + " " + type.getDisplay();
+                            yield TimeParser.formatTime(inf.getDuration()) + " " + type.getDisplay();
                         }
                         case Trial, Blacklist, AdminLeave, Demotion, Termination -> type.getDisplay();
                     };
-                }));
+                }).collect(Collectors.joining(", ")));
 
         String memberInformation =
                 "\n> **Issuer(s):** " + issuers.stream().map(Member::getAsMention).collect(Collectors.joining()) +

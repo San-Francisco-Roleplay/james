@@ -70,13 +70,10 @@ public final class ReferenceManager {
 
     public static ReferenceData getData(String messageId) {
         String json = Generators.getJedis().get(ConfigManager.REDIS_PREFIX_REF + messageId);
-        log.trace("JSON: " + json);
         if (json == null) {
-            log.debug("JSON is null for reference.");
             return null;
         }
 
-        log.trace("Returning.");
         return Generators.getGson().fromJson(json, ReferenceDataImpl.class);
     }
 

@@ -59,7 +59,6 @@ public class ReferenceDataImpl implements ReferenceData {
 
     @Override
     public void execute(Message repliedTo, Message message) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        log.debug("Executing " + getForwardTo());
         Method method = forwardTo();
         method.setAccessible(true);
 

@@ -28,22 +28,17 @@ public class ReferenceListener extends ListenerAdapter {
         Message reply = event.getMessage().getReferencedMessage();
 
         if (reply == null) {
-            log.trace("No reply, returning.");
             return;
         }
 
-        log.trace("Fetching data.");
         ReferenceData data = ReferenceManager.getData(reply.getId());
-        log.trace("Data received.");
         if (data == null) {
-            log.trace("Data is null.");
             return;
         }
 
         String content = message.getContentRaw();
 
         if (content.startsWith(";")) {
-            log.trace("Starts with ;, returning");
             return;
         }
 
@@ -51,7 +46,6 @@ public class ReferenceListener extends ListenerAdapter {
         message.addReaction(Emoji.Loading.toJda())
                 .complete();
 
-        log.trace("Executing from message");
         try {
             data.execute(reply, message);
             message.delete().queue();
@@ -64,6 +58,5 @@ public class ReferenceListener extends ListenerAdapter {
             message.replyEmbeds(new InternalError().makeEmbed().build()).queue();
             throw new RuntimeException(e);
         }
-        log.trace("Finished executing from message");
     }
 }

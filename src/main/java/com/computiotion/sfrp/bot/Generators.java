@@ -2,6 +2,7 @@ package com.computiotion.sfrp.bot;
 
 import com.computiotion.sfrp.bot.adapters.*;
 import com.computiotion.sfrp.bot.components.ComponentData;
+import com.computiotion.sfrp.bot.infractions.Infraction;
 import com.computiotion.sfrp.bot.infractions.InfractionType;
 import com.computiotion.sfrp.bot.reference.ReferenceData;
 import com.computiotion.sfrp.bot.reference.ReferencePayload;
@@ -31,9 +32,10 @@ public class Generators {
         return new GsonBuilder()
                 .registerTypeAdapter(Instant.class, new InstantAdapter())
                 .registerTypeAdapter(Duration.class, new DurationAdapter())
-                .registerTypeAdapter(InfractionType.class, new InfractionTypeAdapter())
+//                .registerTypeAdapter(InfractionType.class, new InfractionTypeAdapter())
                 .registerTypeAdapter(ComponentData.class, new ComponentDataAdapter())
                 .registerTypeAdapter(ReferencePayload.class, new ReferencePayloadAdapter())
+                .registerTypeAdapterFactory(new InfractionAdapterFactory())
                 .create();
     }
 }

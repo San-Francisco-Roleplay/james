@@ -2,13 +2,13 @@ package com.computiotion.sfrp.bot.commands;
 
 import com.computiotion.sfrp.bot.Colors;
 import com.computiotion.sfrp.bot.ConfigManager;
-import com.computiotion.sfrp.bot.Emoji;
 import com.computiotion.sfrp.bot.config.Config;
 import com.computiotion.sfrp.bot.config.ConfigReader;
 import com.computiotion.sfrp.bot.config.StaffConfig;
 import com.computiotion.sfrp.bot.config.StaffPermission;
 import com.computiotion.sfrp.bot.infractions.*;
 import com.computiotion.sfrp.bot.reference.*;
+import com.computiotion.sfrp.bot.time.TimeParser;
 import com.google.common.collect.HashBiMap;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -22,6 +22,8 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.lang.Integer;
+import java.time.Duration;
 import java.util.*;
 
 @CommandController(value = "infract", description = "Utilities relating to infractions.")
@@ -181,6 +183,7 @@ public class Infract extends Command {
                             .setDescription("You are not permitted to preform this action.")
                             .build()))
                     .queue();
+            return;
         }
 
 
@@ -307,6 +310,129 @@ public class Infract extends Command {
             return;
         }
 
+        if (content.startsWith("+") || content.startsWith("-")) {
+            boolean adding = content.startsWith("+");
+
+            String args = content.substring(1);
+            String[] split = args.split(" ", 2);
+
+            if (split.length == 0) {
+                EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                if (queuedMessage == null) return;
+
+                repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** An infraction type must be provided. For more information, review the [documentation](https://docs.sfrp.computiotion.com/ref/ia/infract).")
+                        .build()).queue();
+                return;
+            }
+
+            InfractionType type = Arrays.stream(InfractionType.values())
+                    .filter(item -> Objects.equals(item.getCommand(), split[0]))
+                    .findFirst()
+                    .orElse(null);
+
+            if (type == null) {
+                EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                if (queuedMessage == null) return;
+
+                repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Invalid type `" + split[0] + "`. For more information, review the [documentation](https://docs.sfrp.computiotion.com/ref/ia/infract).")
+                        .build()).queue();
+                return;
+            }
+
+            Infraction toAdd;
+
+            switch (type) {
+                case Warning, Strike -> {
+                    int count = 1;
+                    if (split.length > 2) {
+                        EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                        if (queuedMessage == null) return;
+
+                        repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Improper usage. For more information, review the [documentation](https://docs.sfrp.computiotion.com/ref/ia/infract).")
+                                .build()).queue();
+                        return;
+                    }
+
+                    if (split.length == 2) {
+                        String countStr = split[1];
+                        try {
+                            count = Integer.parseInt(countStr);
+                        } catch (NumberFormatException e) {
+                            EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                            if (queuedMessage == null) return;
+
+                            repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Count must be an integer.")
+                                    .build()).queue();
+                            return;
+                        }
+
+                        if (count < 1 || count > 3) {
+                            EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                            if (queuedMessage == null) return;
+
+                            repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Count must be between 1 and 3.")
+                                    .build()).queue();
+                            return;
+                        }
+                    }
+
+                    toAdd = new QuantitativeInfractionImpl(type, count);
+                    break;
+                }
+                case Suspend -> {
+                    long duration;
+
+                    if (split.length != 2) {
+                        EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                        if (queuedMessage == null) return;
+
+                        repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Improper usage. For more information, review the [documentation](https://docs.sfrp.computiotion.com/ref/ia/infract).")
+                                .build()).queue();
+                        return;
+                    }
+
+                    try {
+                        duration = TimeParser.parseTime(split[1]);
+                    } catch (Exception e) {
+                        EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                        if (queuedMessage == null) return;
+
+                        repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Invalid Duration. For more information, review the [documentation](https://docs.sfrp.computiotion.com/ref/ia/infract).")
+                                .build()).queue();
+                        return;
+                    }
+
+
+                    toAdd = new TimeableInfractionImpl(type, Duration.ofMillis(duration));
+                    break;
+                }
+                default -> {
+                    toAdd = new InfractionImpl(type);
+                }
+            }
+
+            try {
+                if (adding) {
+                    infraction.addInfraction(toAdd);
+                } else {
+                    infraction.removeInfraction(toAdd);
+                }
+            } catch (InfractionEditException e) {
+                EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                if (queuedMessage == null) return;
+
+                repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** " + e.getMessage())
+                        .build()).queue();
+                return;
+            }
+            EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+            if (queuedMessage == null) return;
+
+            repliedTo.editMessageEmbeds(queuedMessage.build()).queue();
+
+            return;
+        }
+
         EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
         if (queuedMessage == null) return;
 
@@ -314,7 +440,7 @@ public class Infract extends Command {
                 .build()).queue();
     }
 
-    @CommandExecutor(value = "member", level = PermissionLevel.HighRank, description = "Infracts a staff member.")
+    @CommandExecutor(value = "member", level = PermissionLevel.HighRank, description = "Infracts a staff member.", rate = RateLimitPreset.Session)
     public void infract(@NotNull CommandInteraction interaction, @User(value = "member", description = "The staff member to infract.") net.dv8tion.jda.api.entities.User user,
                         @Text(value = "reason", description = "The reason for the infraction.") String reason) {
         net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction slash = null;
@@ -351,6 +477,60 @@ public class Infract extends Command {
                         .complete();
                 return;
             }
+        }
+
+        HashBiMap<StaffPermission, String> perms = HashBiMap.create(staff.getRoles());
+
+        assert interaction.getGuild() != null;
+        List<StaffPermission> userRoles = Objects.requireNonNull(interaction.getGuild().getMember(UserSnowflake.fromId(interaction.getUser().getId()))).getRoles()
+                .stream().filter(role -> staff.getRoles().containsValue(role.getId()))
+                .map(role -> perms.inverse().get(role.getId()))
+                .sorted(Comparator.comparingInt(Enum::ordinal))
+                .toList();
+
+        List<StaffPermission> targetRoles = Objects.requireNonNull(member).getRoles()
+                .stream().filter(role -> staff.getRoles().containsValue(role.getId()))
+                .map(role -> perms.inverse().get(role.getId()))
+                .sorted(Comparator.comparingInt(Enum::ordinal))
+                .toList();
+
+        if (!targetRoles.contains(StaffPermission.Staff)) {
+            MessageEmbed embed = new EmbedBuilder()
+                    .setColor(Colors.Red.getColor())
+                    .setTitle("User must be Staff")
+                    .setDescription("The provided user a staff member.")
+                    .build();
+
+            if (interaction.getType() == CommandInteractionType.SLASH) {
+                assert slash != null;
+                slash.replyEmbeds(embed)
+                        .complete();
+            } else {
+                assert message != null;
+                message.replyEmbeds(embed)
+                        .complete();
+            }
+            return;
+        }
+
+
+        if (targetRoles.getLast().ordinal() >= userRoles.getLast().ordinal()) {
+            MessageEmbed embed = new EmbedBuilder()
+                    .setColor(Colors.Red.getColor())
+                    .setTitle("User may not be Infracted")
+                    .setDescription("The provided user is a higher or the same rank as you, and as such may not be infracted by you.")
+                    .build();
+
+            if (interaction.getType() == CommandInteractionType.SLASH) {
+                assert slash != null;
+                slash.replyEmbeds(embed)
+                        .complete();
+            } else {
+                assert message != null;
+                message.replyEmbeds(embed)
+                        .complete();
+            }
+            return;
         }
 
         QueuedInfraction infraction = QueuedInfraction.createInfraction(member.getGuild().getId(), interaction.getUser().getId());

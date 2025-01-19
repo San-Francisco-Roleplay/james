@@ -139,6 +139,102 @@ public class QueuedInfraction implements DatabaseSaveable {
         return infractions;
     }
 
+    public void addInfraction(Infraction... punishments) {
+        HashMap<InfractionType, Infraction> types = new HashMap<>();
+
+        for (Infraction infraction : infractions) {
+            types.put(infraction.getType(), infraction);
+        }
+
+        for (Infraction punishment : punishments) {
+            InfractionType type = punishment.getType();
+            Infraction preexisting = types.get(type);
+            if (preexisting == null) {
+                infractions.add(punishment);
+                continue;
+            }
+
+            switch (preexisting.getType()) {
+                case Warning, Strike -> {
+                    QuantitativeInfraction pre = (QuantitativeInfraction) preexisting;
+                    QuantitativeInfraction punish = (QuantitativeInfraction) punishment;
+
+                    int count = pre.getCount();
+                    int index = infractions.indexOf(preexisting);
+
+                    if (count + punish.getCount() > 3) throw new InfractionEditException("There may only be a maximum of 3 " + type.getDisplay().toLowerCase() + "s applied.");
+
+                    infractions.set(index, new QuantitativeInfractionImpl(type, count + punish.getCount()));
+                }
+                case Suspend -> {
+                    TimeableInfraction pre = (TimeableInfraction) preexisting;
+                    TimeableInfraction punish = (TimeableInfraction) punishment;
+
+                    int index = infractions.indexOf(preexisting);
+
+                    infractions.set(index, new TimeableInfractionImpl(type, pre.getDuration().plus(punish.getDuration())));
+                }
+                case null, default -> {
+                    throw new InfractionEditException("A punishment of this type already exists.");
+                }
+            }
+        }
+
+        if (punishments.length > 0) save();
+    }
+
+    public void removeInfraction(Infraction... punishments) {
+        HashMap<InfractionType, Infraction> types = new HashMap<>();
+
+        for (Infraction infraction : infractions) {
+            types.put(infraction.getType(), infraction);
+        }
+
+        for (Infraction punishment : punishments) {
+            InfractionType type = punishment.getType();
+            Infraction preexisting = types.get(type);
+            if (preexisting == null) {
+                throw new InfractionEditException("A punishment of this type doesn't exist.");
+            }
+
+            switch (preexisting.getType()) {
+                case Warning, Strike -> {
+                    QuantitativeInfraction pre = (QuantitativeInfraction) preexisting;
+                    QuantitativeInfraction punish = (QuantitativeInfraction) punishment;
+
+                    int count = pre.getCount();
+                    int index = infractions.indexOf(preexisting);
+
+                    if ((count - punish.getCount()) < 1) {
+                        infractions.remove(index);
+                        break;
+                    }
+
+                    infractions.set(index, new QuantitativeInfractionImpl(type, count - punish.getCount()));
+                }
+                case Suspend -> {
+                    TimeableInfraction pre = (TimeableInfraction) preexisting;
+                    TimeableInfraction punish = (TimeableInfraction) punishment;
+
+                    int index = infractions.indexOf(preexisting);
+                    Duration duration = pre.getDuration().plus(punish.getDuration());
+
+                    if (duration.toMillisPart() < 1) {
+                        infractions.remove(index);
+                        break;
+                    }
+
+                    infractions.set(index, new TimeableInfractionImpl(type, duration));
+                }
+                case null, default -> {
+                    infractions.remove(preexisting);
+                }
+            }
+        }
+
+        if (punishments.length > 0) save();
+    }
+
     public String getLeader() {
         return leader;
     }
