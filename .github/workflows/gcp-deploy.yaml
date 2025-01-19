@@ -49,4 +49,9 @@ jobs:
           -t "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" \
           -t "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:latest" ./
           docker push "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          docker push "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:latest"
+          docker push "${{ env.AR_URL }}/${{ env.IMAGE_NAME }}:latest"Ï
+      - name: Deploy to Koyeb
+        uses: koyeb-community/koyeb-actions@v2
+        with:
+          api_token: ${{ secrets.KOYEB_TOKEN }}
+      - run: koyeb services redeploy --app=sfrp james
