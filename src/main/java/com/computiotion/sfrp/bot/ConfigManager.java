@@ -1,5 +1,6 @@
 package com.computiotion.sfrp.bot;
 
+import io.sentry.Sentry;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -161,5 +162,28 @@ public class ConfigManager implements WebMvcConfigurer {
         String value = System.getenv("ERM_GUILD_ID");
         if (value == null) throw new NullPointerException("No ERM_GUILD_ID was found in the .env file.");
         return value;
+    }
+
+    /**
+     * Retrieves the Sentry DSN from {@code .env}.
+     *
+     * @return The DSN, as defined in the .env file.
+     * @throws NullPointerException If the token {@code SENTRY_DSN} is not defined in the env file.
+     */
+    public static @NotNull String getSentryDSN() {
+        String value = System.getenv("SENTRY_DSN");
+        if (value == null) throw new NullPointerException("No SENTRY_DSN was found in the .env file.");
+        return value;
+    }
+
+    public static void initSentry() {
+        Sentry.init(options -> {
+            options.setDsn(getSentryDSN());
+
+            // Set traces_sample_rate to 1.0 to capture 100%
+            // of transactions for tracing.
+            // We recommend adjusting this value in production.
+            options.setTracesSampleRate(1.0);
+        });
     }
 }
