@@ -12,4 +12,10 @@ public class GuildReadyListener extends ListenerAdapter {
         Guild guild = event.getGuild();
         Command.registerCommands(guild);
     }
+
+    @Override
+    public void onGuildJoin(@NotNull GuildJoinEvent event) {
+        Guild guild = event.getGuild();
+        Command.registerCommands(guild);
+    }
 }
