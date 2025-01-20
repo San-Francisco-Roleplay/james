@@ -24,10 +24,7 @@ jobs:
         cache: maven
 
     - name: Build with Maven
-      run: mvn -DSENTRY_ORG="${{ secrets.SENTRY_ORG }}" \
-          -DSENTRY_PROJECT="${{ secrets.SENTRY_PROJECT }}" \
-          -DSENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}" \
-          -B package --file pom.xml
+      run: mvn -B package -DSENTRY_ORG="${{ secrets.SENTRY_ORG }}" -DSENTRY_PROJECT="${{ secrets.SENTRY_PROJECT }}" -DSENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}" --file pom.xml
 
     # Uploads the dependency graph snapshot to GitHub
     - name: Update dependency graph
