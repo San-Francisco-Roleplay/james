@@ -23,6 +23,8 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.lang.Integer;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 
@@ -423,12 +425,98 @@ public class Infract extends Command {
 
                 repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** " + e.getMessage())
                         .build()).queue();
+
                 return;
             }
             EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
             if (queuedMessage == null) return;
 
             repliedTo.editMessageEmbeds(queuedMessage.build()).queue();
+            return;
+        }
+
+        if (Objects.equals(content, "proof remove")) {
+            if (infraction.getProofIds().isEmpty() && infraction.getProofMessage() == null) {
+                EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                if (queuedMessage == null) return;
+
+                repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Proof has not yet been attached > `proof link`")
+                        .build()).queue();
+                return;
+            }
+            EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+            if (queuedMessage == null) return;
+
+            infraction.setProof();
+            infraction.setProofMessage(null);
+
+            repliedTo.editMessageEmbeds(queuedMessage
+                    .setColor(Colors.Green.getColor())
+                    .build()).queue();
+            return;
+        }
+
+        if (Objects.equals(content, "proof")) {
+            EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+            if (queuedMessage == null) return;
+
+            if (infraction.getProofIds().isEmpty() && infraction.getProofMessage() == null) {
+                repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Proof has not yet been attached > `proof link`")
+                        .build()).queue();
+                return;
+            }
+            repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Proof has been DM'd to you.")
+                    .build()).queue();
+
+            new EmbedBuilder()
+                    .setTitle("Proof Viewer")
+                    .setColor(Colors.Green.getColor())
+                    .build();
+
+            List<String> urls = infraction.getProofIds().stream()
+                    .map(id -> "https://api.sfrp.computiotion.com/v1/infract/" + infraction.getId() + "/proof/" + id + "?token=" + URLEncoder.encode(infraction.getToken(), StandardCharsets.UTF_8))
+                    .toList();
+
+            message.getAuthor().openPrivateChannel()
+                    .flatMap(privateChannel ->
+                            privateChannel.sendMessageEmbeds(new EmbedBuilder()
+                                    .setColor(Colors.DarkMode.getColor())
+                                    .setTitle("Infraction Proof")
+                                    .setDescription("Proof for infraction `" + infraction.getId() + "`.")
+                                    .addField("Message:", infraction.getProofMessage() == null ? "*No infraction message was provided.*" : infraction.getProofMessage(), false)
+                                    .addField("Files:", String.join("\n", urls.stream().map(url -> "> [File](" + url + ")").toArray(String[]::new)), false)
+                                    .build())).queue();
+
+            return;
+        }
+
+        if (Objects.equals(content, "proof link")) {
+            if (!(infraction.getProofIds().isEmpty() && infraction.getProofMessage() == null)) {
+                EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+                if (queuedMessage == null) return;
+
+                repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Proof has already been attached > `proof remove`")
+                        .build()).queue();
+                return;
+            }
+            EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
+            if (queuedMessage == null) return;
+
+            EmbedBuilder proofMessage = InfractionMessageUtils.createProofMessage("https://sfrp.computiotion.com/staff/infract/" + infraction.getId() + "/proof-upload?token=" + URLEncoder.encode(infraction.getToken(), StandardCharsets.UTF_8), repliedTo.getJumpUrl(), infraction);
+            if (proofMessage == null) return;
+
+            ReferenceManager.removeData(data);
+
+            repliedTo.editMessageEmbeds(queuedMessage
+                    .setColor(Colors.Green.getColor())
+                    .appendDescription("**`CMD:`** " + "Please check your DMs for more information.")
+                    .build()).queue();
+
+
+            message.getAuthor().openPrivateChannel()
+                    .flatMap(channel -> channel.sendMessageEmbeds(proofMessage.build()))
+                    .queue();
+
 
             return;
         }
@@ -438,6 +526,22 @@ public class Infract extends Command {
 
         repliedTo.editMessageEmbeds(queuedMessage.appendDescription("**`CMD:`** Unknown command `" + content + "` For more information, review the [documentation](https://docs.sfrp.computiotion.com/ref/ia/infract).")
                 .build()).queue();
+    }
+
+    @ReferenceHandler("infract_proof")
+    public void infractProofRef(ReferenceData data, Message message, Message repliedTo) {
+        String content = message.getContentRaw();
+        ReferencePayload payload = data.getPayload();
+        if (!(payload instanceof InfractionReference ref)) return;
+
+        String queueId = ref.getQueueId();
+        QueuedInfraction infraction = QueuedInfraction.getCollection(queueId);
+        if (infraction == null) {
+            repliedTo.delete().queue();
+            return;
+        }
+
+
     }
 
     @CommandExecutor(value = "member", level = PermissionLevel.HighRank, description = "Infracts a staff member.", rate = RateLimitPreset.Session)
@@ -533,24 +637,28 @@ public class Infract extends Command {
             return;
         }
 
-        QueuedInfraction infraction = QueuedInfraction.createInfraction(member.getGuild().getId(), interaction.getUser().getId());
+        Message res;
+        if (interaction.getType() == CommandInteractionType.SLASH) {
+            assert slash != null;
+            InteractionHook hook = slash.reply("Loading...")
+                    .complete();
+            res = hook.retrieveOriginal().complete();
+        } else {
+            assert message != null;
+            res = message.reply("Loading...")
+                    .complete();
+        }
+
+        QueuedInfraction infraction = QueuedInfraction.createInfraction(res.getChannelId(), res.getId(), member.getGuild().getId(), interaction.getUser().getId());
         infraction.addTargets(user.getId());
         infraction.setReason(reason);
 
         EmbedBuilder queuedMessage = InfractionMessageUtils.createQueuedMessage(infraction);
         if (queuedMessage == null) return;
-        Message res;
 
-        if (interaction.getType() == CommandInteractionType.SLASH) {
-            assert slash != null;
-            InteractionHook hook = slash.replyEmbeds(queuedMessage.build())
-                    .complete();
-            res = hook.retrieveOriginal().complete();
-        } else {
-            assert message != null;
-            res = message.replyEmbeds(queuedMessage.build())
-                    .complete();
-        }
+        res.editMessageEmbeds(queuedMessage.build())
+                .setReplace(true)
+                .queue();
 
         ReferenceManager.registerData(new ReferenceDataImpl("infract_queue", res.getId(), new InfractionReference(infraction.getId())));
     }

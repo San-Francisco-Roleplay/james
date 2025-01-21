@@ -42,7 +42,6 @@ public class InfractionAdapterFactory implements TypeAdapterFactory {
             @Override
             public T read(JsonReader in) throws IOException {
                 JsonElement jsonElement = elementAdapter.read(in);
-                log.debug("JSON Element: " + jsonElement.toString());
                 if (!jsonElement.isJsonObject()) {
                     throw new JsonSyntaxException("Expected a JSON object but was " + jsonElement);
                 }

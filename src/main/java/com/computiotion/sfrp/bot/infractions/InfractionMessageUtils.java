@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.SortedSet;
@@ -19,6 +20,17 @@ import static org.springframework.format.annotation.DurationFormat.Style.SIMPLE;
 public class InfractionMessageUtils {
     private static final Log log = LogFactory.getLog(InfractionMessageUtils.class);
     private static JDA jda = null;
+
+    public static @Nullable EmbedBuilder createProofMessage(String url, String jumpUrl, QueuedInfraction infraction) {
+        EmbedBuilder queuedMessage = createQueuedMessage(infraction);
+        if (queuedMessage == null) return null;
+
+        queuedMessage.setTitle("Attach Proof")
+                .setColor(Colors.Green.getColor())
+                .setDescription("Please [click here](" + url + ") to attach proof. [Jump to Message](" + jumpUrl + ")");
+
+        return queuedMessage;
+    }
 
     public static EmbedBuilder createQueuedMessage(QueuedInfraction infraction) {
         if (jda == null) jda = BotApplication.getJda();
@@ -61,7 +73,8 @@ public class InfractionMessageUtils {
                         }
                         case Trial, Blacklist, AdminLeave, Demotion, Termination -> type.getDisplay();
                     };
-                }).collect(Collectors.joining(", ")));
+                }).collect(Collectors.joining(", "))) +
+                "\n> **Proof Status:** " + ((infraction.getProofIds().isEmpty() && infraction.getProofMessage() == null) ? "*No proof has been attached.*" : "Proof has been attached (`proof`).");
 
         String memberInformation =
                 "\n> **Issuer(s):** " + issuers.stream().map(Member::getAsMention).collect(Collectors.joining()) +
