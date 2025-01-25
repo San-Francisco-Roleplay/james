@@ -3,15 +3,15 @@ package com.computiotion.sfrp.bot;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 
 public class Snowflake {
+    private final Instant DEFAULT_EPOCH = Instant.ofEpochSecond(1735603200);
     /**
      * The timestamp after the Unix epoch that should be the basis for all dates. Defaults to 0.
      * Forty-two bits.
      */
-    private Timestamp epoch;
+    private Instant epoch;
     /**
      * Internal process ID, in decimal.
      * 5 bits, max = 31.
@@ -28,15 +28,15 @@ public class Snowflake {
      */
     private Integer increment;
 
-    public Snowflake(@Nullable Timestamp epoch, @Nullable Integer increment, @Nullable Integer pid, @Nullable Integer worker) {
-        this.epoch = epoch == null ? new Timestamp(0) : epoch;
+    public Snowflake(@Nullable Instant epoch, @Nullable Integer increment, @Nullable Integer pid, @Nullable Integer worker) {
+        this.epoch = epoch == null ? DEFAULT_EPOCH : epoch;
         this.increment = increment == null ? 0 : increment;
         this.pid = pid == null ? 0 : pid;
         this.worker = worker == null ? 0 : worker;
     }
 
     public Snowflake() {
-        this.epoch = new Timestamp(0);
+        this.epoch = DEFAULT_EPOCH;
         this.increment = 0;
         this.pid = 0;
         this.worker = 0;
@@ -45,7 +45,7 @@ public class Snowflake {
     /**
      * @return the specified epoch
      */
-    public Timestamp getEpoch() {
+    public Instant getEpoch() {
         return epoch;
     }
 
@@ -81,30 +81,30 @@ public class Snowflake {
         return this;
     }
 
-    public Snowflake setEpoch(Timestamp epoch) {
+    public Snowflake setEpoch(Instant epoch) {
         this.epoch = epoch;
         return this;
     }
 
     public String generate() {
-        return String.valueOf(generateAsLong(Timestamp.from(Instant.now())));
+        return String.valueOf(generateAsLong(Instant.now()));
     }
 
-    public String generate(Timestamp timestamp) {
-        return String.valueOf(generateAsLong(timestamp));
+    public String generate(Instant instant) {
+        return String.valueOf(generateAsLong(instant));
     }
 
     public Long generateAsLong() {
-        return generateAsLong(Timestamp.from(Instant.now()));
+        return generateAsLong(Instant.now());
     }
 
-    public Long generateAsLong(Timestamp timestamp) {
-        if (epoch == null) epoch = new Timestamp(0);
+    public Long generateAsLong(Instant instant) {
+        if (epoch == null) epoch = DEFAULT_EPOCH;
         if (increment == null) increment = 0;
         if (pid == null) pid = 0;
         if (worker == null) worker = 0;
 
-        long refTimestamp = timestamp.getTime() - epoch.getTime();
+        long refTimestamp = instant.toEpochMilli() - epoch.toEpochMilli();
 
         String binaryTime = StringUtils.leftPad(Long.toBinaryString(refTimestamp), 42, "0");
         String binaryWorker = StringUtils.leftPad(Integer.toBinaryString(worker), 5, "0");

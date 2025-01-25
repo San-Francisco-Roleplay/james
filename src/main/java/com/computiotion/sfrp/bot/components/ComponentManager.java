@@ -1,6 +1,7 @@
 package com.computiotion.sfrp.bot.components;
 
 import com.computiotion.sfrp.bot.Generators;
+import com.computiotion.sfrp.bot.Reference;
 import com.computiotion.sfrp.bot.Snowflake;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
@@ -8,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import redis.clients.jedis.Jedis;
 
-import javax.swing.plaf.basic.BasicTreeUI;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
@@ -24,13 +23,13 @@ public class ComponentManager {
     private static final HashMap<String, Class<? extends ComponentData>> types = new HashMap<>();
 
     public static void registerType(@NotNull Class<? extends ComponentData> type) {
-        ComponentReference ref = type.getAnnotation(ComponentReference.class);
+        Reference ref = type.getAnnotation(Reference.class);
         Preconditions.checkNotNull(ref, "ComponentData must be annotated with ComponentReference");
 
         types.put(ref.value(), type);
     }
 
-    public static void registerGeneric(@NotNull Method method) {
+    public static void registerGeneric(@NotNull Method method) { // A generic is a permanent handler.
         ComponentHandler ref = method.getAnnotation(ComponentHandler.class);
         Preconditions.checkNotNull(ref, "Generic Handler must be annotated with ComponentHandler");
 

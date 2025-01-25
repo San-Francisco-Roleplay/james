@@ -602,7 +602,7 @@ public abstract class Command {
                             String mention = mem.getAsMention();
                             String id = mem.getId();
                             String name = mem.getName();
-
+                          
                             if (finalArg.equalsIgnoreCase(mention)) return true;
                             if (finalArg.equalsIgnoreCase(id)) return true;
                             return finalArg.equalsIgnoreCase(name);

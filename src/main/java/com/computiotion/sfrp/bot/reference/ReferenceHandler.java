@@ -1,4 +1,4 @@
-package com.computiotion.sfrp.bot.components;
+package com.computiotion.sfrp.bot.reference;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,10 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface ComponentReference {
+@Target(ElementType.METHOD)
+public @interface ReferenceHandler {
     /**
-     * @return A token for identifying this reference.
+     * @return The id of this handler.
      */
     String value();
 }

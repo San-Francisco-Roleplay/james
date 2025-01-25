@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,14 +43,14 @@ public class TimeParser {
     }
 
     /**
-     * Parses a formatted string representing a time duration and converts it to the total number of milliseconds.
-     * The string can contain numerical values followed by valid time units (for example, "1 day", "2 hours").
-     * Valid time units include variations for years, months, weeks, days, hours, minutes, and seconds.
-     * Throws a {@link ParseException} if the string contains invalid or unsupported time units or an improper format.
+     * Parses a formatted string representing a time duration and converts it to the total number of milliseconds. The
+     * string can contain numerical values followed by valid time units (for example, "1 day", "2 hours"). Valid time
+     * units include variations for years, months, weeks, days, hours, minutes, and seconds. Throws a
+     * {@link ParseException} if the string contains invalid or unsupported time units or an improper format.
      *
      * @param input The input string that represents a time duration. Mustn't be null.
      * @return The total time duration in milliseconds as a long value.
-     * @throws ParseException If the input format is invalid or contains unknown time units.
+     * @throws ParseException           If the input format is invalid or contains unknown time units.
      * @throws IllegalArgumentException If the input string is null or improperly formatted.
      */
     public static long parseTime(@NotNull String input) {
@@ -92,5 +93,42 @@ public class TimeParser {
         }
 
         return totalMilliseconds;
+    }
+
+    /**
+     * Formats a given duration to a human-readable string. The output string will contain the largest possible units
+     * (e.g., "1 year", "2 months").
+     *
+     * @param duration The duration to format.
+     * @return A human-readable string representing the duration.
+     */
+    public static String formatTime(Duration duration) {
+        return formatTime(duration.toMillis());
+    }
+
+    /**
+     * Formats a given duration in milliseconds to a human-readable string. The output string will contain the largest
+     * possible units (e.g., "1 year", "2 months").
+     *
+     * @param milliseconds The duration in milliseconds.
+     * @return A human-readable string representing the duration.
+     */
+    public static String formatTime(long milliseconds) {
+        StringBuilder result = new StringBuilder();
+
+        final long[] millis = {milliseconds};
+
+        units.entrySet().stream()
+                .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
+                .forEachOrdered(entry -> {
+                    long unitValue = entry.getValue();
+                    if (millis[0] >= unitValue) {
+                        long count = millis[0] / unitValue;
+                        millis[0] %= unitValue;
+                        result.append(count).append(" ").append(entry.getKey()).append((count > 1 && !entry.getKey().endsWith("s") ? "s" : "")).append(" ");
+                    }
+                });
+
+        return result.toString().trim();
     }
 }

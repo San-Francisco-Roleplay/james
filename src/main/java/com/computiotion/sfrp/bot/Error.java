@@ -20,7 +20,14 @@ public enum Error {
     NoRequest(404, "No Attempt Present", "There is no pre-existing attempt present for %s."),
     MissingAuth(401, "Missing Authentication", "Authentication is required to access this."),
     InvalidAuth(401, "Invalid Authentication", "The authentication provided is invalid and may not access this."),
-    NoPerms(403, "Lacking Permissions", "You are lacking permission to access this resource.")
+    NoPerms(403, "Lacking Permissions", "You are lacking permission to access this resource."),
+    Unauthorized(403, "Unauthorized", "You do not have permission to access this resource."),
+    TooMuchProof(413, "Too Much Proof", "The maximum amount of attachments allowed is 10."),
+    ProofFileTooLarge(413, "Files too Large", "The maximum cumulative size for proof is 3 gigabytes (got %s)."),
+    ProofMessageTooLong(413, "Message too Large", "The maximum length for a proof message is 4000 characters (got %s)."),
+    ProofNoContent(400, "No Content", "Uploading proof requires either a message or a file."),
+    ProofInvalidFileFormat(400, "Invalid File Format", "The only allowed file formats are %s, got %s."),
+    ProofAlreadyExists(409, "Proof Already Exists", "Proof has already been uploaded for this infraction."),
     ;
 
     private int code = ordinal();
