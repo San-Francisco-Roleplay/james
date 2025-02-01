@@ -1,6 +1,7 @@
 package com.computiotion.sfrp.bot;
 
 import io.sentry.Sentry;
+import io.sentry.Sentry;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,9 +21,11 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class ConfigManager implements WebMvcConfigurer {
+    public static final String REDIS_PREFIX_REF = "ref:";
     public static final String REDIS_PREFIX_PERM_COMPONENT = "component:";
     public static final String REDIS_PREFIX_INFRACTION_HISTORY = "staff:";
     public static final String REDIS_PREFIX_INFRACTION_COLLECTION = "infract:coll:";
+    public static final String REDIS_PREFIX_INFRACTION_QUEUE = "infract:pending:";
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -159,6 +162,66 @@ public class ConfigManager implements WebMvcConfigurer {
     public static @NotNull String getErmGuild() {
         String value = System.getenv("ERM_GUILD_ID");
         if (value == null) throw new NullPointerException("No ERM_GUILD_ID was found in the .env file.");
+        return value;
+    }
+
+    /**
+     * Retrieves the encryption token from {@code .env}.
+     *
+     * @return The token, as defined in the .env file.
+     * @throws NullPointerException If the token {@code ENCRYPTION_TOKEN} is not defined in the env file.
+     */
+    public static @NotNull String getEncryptionToken() {
+        String value = System.getenv("ENCRYPTION_TOKEN");
+        if (value == null) throw new NullPointerException("No ENCRYPTION_TOKEN was found in the .env file.");
+        return value;
+    }
+
+    /**
+     * Retrieves the Cloudflare R2 endpoint from {@code .env}.
+     *
+     * @return The endpoint, as defined in the .env file.
+     * @throws NullPointerException If the token {@code CF_R2_ENDPOINT} is not defined in the env file.
+     */
+    public static @NotNull String getR2Endpoint() {
+        String value = System.getenv("CF_R2_ENDPOINT");
+        if (value == null) throw new NullPointerException("No CF_R2_ENDPOINT was found in the .env file.");
+        return value;
+    }
+
+    /**
+     * Retrieves the Cloudflare R2 bucket from {@code .env}.
+     *
+     * @return The bucket, as defined in the .env file.
+     * @throws NullPointerException If the bucket {@code CF_R2_BUCKET_NAME} is not defined in the env file.
+     */
+    public static @NotNull String getR2Bucket() {
+        String value = System.getenv("CF_R2_BUCKET_NAME");
+        if (value == null) throw new NullPointerException("No CF_R2_BUCKET_NAME was found in the .env file.");
+        return value;
+    }
+
+    /**
+     * Retrieves the Cloudflare R2 key ID from {@code .env}.
+     *
+     * @return The ID, as defined in the .env file.
+     * @throws NullPointerException If the bucket {@code CF_R2_KEY_ID} is not defined in the env file.
+     */
+    public static @NotNull String getR2KeyId() {
+        String value = System.getenv("CF_R2_KEY_ID");
+        if (value == null) throw new NullPointerException("No CF_R2_KEY_ID was found in the .env file.");
+        return value;
+    }
+
+    /**
+     * Retrieves the Cloudflare R2 access key from {@code .env}.
+     *
+     * @return The key, as defined in the .env file.
+     * @throws NullPointerException If the bucket {@code CF_R2_ACCESS_KEY} is not defined in the env file.
+     */
+    public static @NotNull String getR2AccessKey() {
+        String value = System.getenv("CF_R2_ACCESS_KEY");
+        if (value == null) throw new NullPointerException("No CF_R2_ACCESS_KEY was found in the .env file.");
         return value;
     }
 

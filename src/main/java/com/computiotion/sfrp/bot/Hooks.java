@@ -19,10 +19,10 @@ public class Hooks {
         return res;
     }
 
-    public static boolean useAuth(String token) {
-        if (token == null) return false;
-        if (token.startsWith("Bearer ")) token = token.substring(7);
+    public static String getAuth(@Nullable String token) {
+        if (token == null) return null;
+        if (token.startsWith("Bearer ")) token = token.substring("Bearer ".length());
 
-        return token.equals(getSetupPassword());
+        return token.trim();
     }
 }

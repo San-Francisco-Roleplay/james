@@ -2,8 +2,8 @@ package com.computiotion.sfrp.bot.config;
 
 public enum StaffPermission {
     Staff(),
-    HighRank(),
     Developer(),
+    HighRank(),
     InternalAffairs(),
     SeniorHighRank(),
     BoardOfExecutives(),
